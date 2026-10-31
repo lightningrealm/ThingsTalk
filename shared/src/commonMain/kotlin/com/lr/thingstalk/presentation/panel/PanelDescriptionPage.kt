@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.panel
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,62 +16,62 @@ import com.lr.thingstalk.presentation.components.Tag
 @Composable
 fun PanelDescriptionPage(viewModel: PanelViewModel) {
     val state by viewModel.state.collectAsState()
-    Page("PANEL CAPABILITIES", "能力与通信绑定", "来自当前面板配置 · schemaVersion ${state.definition.schemaVersion}") {
-        if (state.definition.capabilities.isEmpty()) Text("还没有组件能力。请先添加组件。")
+    Page("PANEL CAPABILITIES", tr(AppStrings.capabilities_and_bindings_c77cc4), tr(AppStrings.current_panel_configuration_schemaversion_07ba96, state.definition.schemaVersion)) {
+        if (state.definition.capabilities.isEmpty()) Text(tr(AppStrings.no_capabilities_yet_add_a_widget_first_0d64da))
         state.definition.capabilities.forEach { capability ->
             val binding = state.definition.bindings.singleOrNull { it.capabilityId == capability.id }
             Panel {
                 Text(capability.label, style = MaterialTheme.typography.titleMedium)
                 Tag(capability.id)
-                KeyValue("类型", when (capability.type) {
-                    CapabilityType.NUMBER -> "数值 ${capability.minimum ?: 0.0}–${capability.maximum ?: 255.0} ${capability.unit}"
-                    CapabilityType.BOOLEAN -> "布尔"
-                    CapabilityType.ACTION -> "动作"
+                KeyValue(tr(AppStrings.type_e4e46c), when (capability.type) {
+                    CapabilityType.NUMBER -> tr(AppStrings.number_112789, capability.minimum ?: 0.0, capability.maximum ?: 255.0, capability.unit)
+                    CapabilityType.BOOLEAN -> tr(AppStrings.boolean_a091ff)
+                    CapabilityType.ACTION -> tr(AppStrings.action_d9d982)
                 })
-                binding?.controlTransport?.let { KeyValue("控制通道", it.name) }
-                binding?.stateTransport?.let { KeyValue("状态来源", it.name) }
-                if (binding == null) Text("尚未绑定操作")
-                listOf("读取" to binding?.read, "写入" to binding?.write, "通知" to binding?.notify).forEach { (label, operation) ->
+                binding?.controlTransport?.let { KeyValue(tr(AppStrings.control_channel_cdcfeb), it.name) }
+                binding?.stateTransport?.let { KeyValue(tr(AppStrings.state_source_377857), it.name) }
+                if (binding == null) Text(tr(AppStrings.no_operation_bound_ad33a9))
+                listOf(tr(AppStrings.read_b6b97a) to binding?.read, tr(AppStrings.write_9e93bd) to binding?.write, tr(AppStrings.notify_7a66c0) to binding?.notify).forEach { (label, operation) ->
                     if (operation != null) {
                         val reference = operation.payload
                         val format = state.definition.payloadFormats.singleOrNull { it.id == reference?.formatId }
-                        KeyValue(label, if (reference == null) operation.codec.name else "${format?.label ?: reference.formatId} · ${reference.fieldId ?: "完整默认报文"}")
+                        KeyValue(label, if (reference == null) operation.codec.name else "${format?.label ?: reference.formatId} · ${reference.fieldId ?: tr(AppStrings.complete_default_payload_929818)}")
                         if (reference == null && capability.type == CapabilityType.NUMBER) {
-                            KeyValue("字节序", operation.byteOrder.name)
-                            KeyValue("换算", "原始值 × ${operation.scale} + ${operation.bias}")
+                            KeyValue(tr(AppStrings.byte_order_a15ac8), operation.byteOrder.name)
+                            KeyValue(tr(AppStrings.conversion_942742), tr(AppStrings.raw_966247, operation.scale, operation.bias))
                         }
-                        if (reference == null && label != "写入") KeyValue("读取偏移", "${operation.readOffset} 字节")
+                        if (reference == null && label != tr(AppStrings.write_9e93bd)) KeyValue(tr(AppStrings.read_offset_17e6c9), tr(AppStrings.bytes_c55609, operation.readOffset))
                         else if (reference == null) {
-                            if (operation.writePrefixHex.isNotBlank()) KeyValue("写入前缀", operation.writePrefixHex)
-                            if (operation.writeSuffixHex.isNotBlank()) KeyValue("写入后缀", operation.writeSuffixHex)
+                            if (operation.writePrefixHex.isNotBlank()) KeyValue(tr(AppStrings.write_prefix_9a7ddf), operation.writePrefixHex)
+                            if (operation.writeSuffixHex.isNotBlank()) KeyValue(tr(AppStrings.write_suffix_7c5502), operation.writeSuffixHex)
                         }
-                        if (reference == null && capability.type == CapabilityType.BOOLEAN) KeyValue("布尔编码", "关闭 ${operation.falseHex} / 开启 ${operation.trueHex}")
-                        Text("服务 ${operation.serviceUuid}\n特征 ${operation.characteristicUuid}", style = MaterialTheme.typography.bodySmall)
+                        if (reference == null && capability.type == CapabilityType.BOOLEAN) KeyValue(tr(AppStrings.boolean_encoding_41411e), tr(AppStrings.off_on_6abb88, operation.falseHex, operation.trueHex))
+                        Text(tr(AppStrings.service_ncharacteristic_02a5f6, operation.serviceUuid, operation.characteristicUuid), style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                listOf("发布" to binding?.publish, "订阅" to binding?.subscribe).forEach { (label, op) ->
+                listOf(tr(AppStrings.publish_94f172) to binding?.publish, tr(AppStrings.subscribe_5319af) to binding?.subscribe).forEach { (label, op) ->
                     if (op != null) {
                         KeyValue(label, op.topic)
-                        KeyValue("报文 / 字段", "${op.payload.formatId} / ${op.payload.fieldId ?: "完整默认报文"}")
+                        KeyValue(tr(AppStrings.payload_field_852467), "${op.payload.formatId} / ${op.payload.fieldId ?: tr(AppStrings.complete_default_payload_929818)}")
                         KeyValue("QoS", op.qos.toString())
                     }
                 }
-                binding?.actionValue?.let { KeyValue("固定数据", it) }
+                binding?.actionValue?.let { KeyValue(tr(AppStrings.fixed_data_4dec8c), it) }
             }
         }
         state.definition.payloadFormats.forEach { format ->
             Panel {
                 Text(format.label, style = MaterialTheme.typography.titleMedium)
-                KeyValue("格式 ID", format.id)
-                KeyValue("编码", if (format.encoding == PayloadEncoding.BINARY) "定长二进制 · 字段按顺序排列" else "JSON · 字段名作为键")
-                if (format.prefixHex.isNotEmpty()) KeyValue("帧头", format.prefixHex)
-                if (format.suffixHex.isNotEmpty()) KeyValue("帧尾", format.suffixHex)
+                KeyValue(tr(AppStrings.format_id_ee5bf1), format.id)
+                KeyValue(tr(AppStrings.encoding_c94faa), if (format.encoding == PayloadEncoding.BINARY) tr(AppStrings.fixed_length_binary_fields_in_order_9777dc) else tr(AppStrings.json_field_names_as_keys_d4edb3))
+                if (format.prefixHex.isNotEmpty()) KeyValue(tr(AppStrings.header_29a161), format.prefixHex)
+                if (format.suffixHex.isNotEmpty()) KeyValue(tr(AppStrings.trailer_f1bf8b), format.suffixHex)
                 format.fields.forEach { field ->
                     KeyValue(field.id, field.codec.name)
                     if (format.encoding == PayloadEncoding.BINARY) {
-                        KeyValue("${field.id} · 字节序 / 换算", "${field.byteOrder.name} · × ${field.scale} + ${field.bias}")
+                        KeyValue(tr(AppStrings.byte_order_conversion_49beea, field.id), "${field.byteOrder.name} · × ${field.scale} + ${field.bias}")
                     }
-                    field.defaultValue?.let { KeyValue("${field.id} · 写入默认值", it) }
+                    field.defaultValue?.let { KeyValue(tr(AppStrings.default_write_value_39167b, field.id), it) }
                 }
             }
         }

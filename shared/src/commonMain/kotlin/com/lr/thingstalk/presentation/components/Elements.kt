@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.components
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -94,7 +95,7 @@ fun Toggle(label: String, detail: String, checked: Boolean, change: (Boolean) ->
 @Composable
 fun Choices(values: List<String>, selected: String, select: (String) -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        values.forEach { value -> FilterChip(selected == value, { select(value) }, label = { Text(value) }) }
+        values.forEach { value -> FilterChip(selected == value, { select(value) }, label = { Text(choiceLabel(value)) }) }
     }
 }
 
@@ -108,7 +109,7 @@ fun Trend() {
     val gridColor = Line
     val trendColor = Accent
     val points = listOf(.5f, .54f, .47f, .61f, .58f, .7f, .65f, .62f, .74f, .69f, .8f, .76f)
-    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = "模拟湿度趋势，从 45% 缓慢升至 52%" }) {
+    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = tr(AppStrings.simulated_humidity_trend_gradually_rising_from_45_to_52_47c5aa) }) {
         repeat(3) { i -> val y = size.height * (i + 1) / 4; drawLine(gridColor, Offset(0f, y), Offset(size.width, y), 1f) }
         val path = Path()
         points.forEachIndexed { i, v -> val x = size.width * i / (points.size - 1); val y = size.height * (1 - v); if (i == 0) path.moveTo(x, y) else path.lineTo(x, y) }
@@ -133,5 +134,12 @@ fun Glyph(kind: String, modifier: Modifier = Modifier, color: Color = Accent) {
             "light" -> { drawCircle(color,w*.27f,Offset(w*.5f,h*.35f),style=Stroke(stroke)); line(.4f,.62f,.4f,.8f); line(.6f,.62f,.6f,.8f); line(.4f,.8f,.6f,.8f); line(.43f,.93f,.57f,.93f) }
             else -> { drawRoundRect(color,Offset(w*.2f,h*.08f),androidx.compose.ui.geometry.Size(w*.6f,h*.84f),androidx.compose.ui.geometry.CornerRadius(3.dp.toPx()),style=Stroke(stroke)); line(.2f,.5f,.8f,.5f); line(.65f,.3f,.65f,.38f); line(.65f,.65f,.65f,.73f) }
         }
+    }
+}
+
+@Composable
+fun RetentionChoices(values: List<String>, selected: String, select: (String) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        values.forEach { value -> FilterChip(selected == value, { select(value) }, label = { Text(tr(AppStrings.days_5d45fa, value)) }) }
     }
 }

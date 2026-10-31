@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.activity
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
@@ -17,7 +18,7 @@ import com.lr.thingstalk.getPlatform
 import com.lr.thingstalk.platformCapabilities
 import kotlin.time.Instant
 
-private fun ReadUpdateResult.notice(): String = error ?: "已更新 $changed 条 · 操作后 $unread 条未读"
+private fun ReadUpdateResult.notice(): String = error ?: tr(AppStrings.updated_unread_remaining_5fa648, changed, unread)
 
 private fun timeLabel(value: Long) = Instant.fromEpochMilliseconds(value).toString().replace('T',' ').substringBefore('.').removeSuffix("Z") + " UTC"
 
@@ -32,47 +33,47 @@ fun ActivityPages(route: Route, activity: ActivityRepository, workspace: DeviceW
     val devices by workspace.devices.collectAsState()
     when (route.screen) {
         Screen.EVENTS -> {
-            var view by remember { mutableStateOf(if (route.id == "traffic") "通信记录" else "设备事件") }
-            var filter by remember { mutableStateOf("全部") }
-            var transport by remember { mutableStateOf("全部") }
+            var view by remember { mutableStateOf(if (route.id == "traffic") "choice:traffic_7c4ff3" else "choice:device_events_814c23") }
+            var filter by remember { mutableStateOf("choice:all_778fc8") }
+            var transport by remember { mutableStateOf("choice:all_778fc8") }
             var selectedDevice by remember { mutableStateOf("") }
             var query by remember { mutableStateOf("") }
             var limit by remember(view, filter, transport, selectedDevice, query) { mutableStateOf(50) }
-            Page("ACTIVITY", "消息", "只记录实际发生的通信与事件；后台暂停期间不保证收取。") {
-                Choices(listOf("设备事件", "通信记录"), view) { view = it }
-                Choices(if (platformCapabilities().ble) listOf("全部","BLE","MQTT") else listOf("全部","MQTT"), transport) { transport = it }
-                OutlinedTextField(query, { query = it }, label = { Text("搜索设备、事件或 topic / UUID") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Page("ACTIVITY", tr(AppStrings.messages_dc6de3), tr(AppStrings.actual_traffic_and_events_only_reception_is_not_guarant_f42a09)) {
+                Choices(listOf("choice:device_events_814c23", "choice:traffic_7c4ff3"), view) { view = it }
+                Choices(if (platformCapabilities().ble) listOf("choice:all_778fc8","BLE","MQTT") else listOf("choice:all_778fc8","MQTT"), transport) { transport = it }
+                OutlinedTextField(query, { query = it }, label = { Text(tr(AppStrings.search_devices_events_or_topic_uuid_f18a60)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 var chooseDevice by remember { mutableStateOf(false) }
-                TextButton(onClick = { chooseDevice = !chooseDevice }) { Text("设备：${devices.firstOrNull { it.id == selectedDevice }?.name ?: "全部"}") }
+                TextButton(onClick = { chooseDevice = !chooseDevice }) { Text(tr(AppStrings.device_4bd84f, devices.firstOrNull { it.id == selectedDevice }?.name ?: tr(AppStrings.all_778fc8))) }
                 if (chooseDevice) {
-                    TextButton(onClick = { selectedDevice = ""; chooseDevice = false }) { Text("全部设备与工作台") }
+                    TextButton(onClick = { selectedDevice = ""; chooseDevice = false }) { Text(tr(AppStrings.all_devices_and_workbench_eb1065)) }
                     devices.forEach { d -> TextButton(onClick = { selectedDevice = d.id; chooseDevice = false }) { Text(d.name) } }
                 }
-                if (view == "设备事件") {
-                    Choices(listOf("全部", "未读", "待处理"), filter) { filter = it }
-                    Text("${archive.events.count { !it.read }} 条未读 · 本地保留 ${archive.retentionDays} 天", color = Muted)
-                    TextButton(onClick = { feedback(activity.markAllRead().notice()) }) { Text("全部标为已读") }
-                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    val rows = archive.events.filter { e -> (transport == "全部" || e.transport == transport) && (selectedDevice.isEmpty() || e.deviceId == selectedDevice) &&
-                        (filter == "全部" || filter == "未读" && !e.read || filter == "待处理" && e.warning && !e.acknowledged) &&
-                        (e.title + e.deviceName + e.detail).contains(query, true) }
-                    if (rows.isEmpty()) Panel { Text("暂无符合条件的事件"); Text("连接设备或进行操作后，真实事件会出现在这里。", color = Muted) }
-                    rows.take(limit).forEach { e -> key(e.id) { Item((if (!e.read) "● " else "") + e.title,
-                        "${e.deviceName} · ${e.transport} · ${timeLabel(e.timestamp)}${if (e.count > 1) " · ${e.count} 次" else ""}") {
+                if (view == "choice:device_events_814c23") {
+                    Choices(listOf("choice:all_778fc8", "choice:unread_1e230a", "choice:needs_attention_59a9eb"), filter) { filter = it }
+                    Text(tr(AppStrings.unread_kept_locally_for_days_826b13, archive.events.count { !it.read }, archive.retentionDays), color = Muted)
+                    TextButton(onClick = { feedback(activity.markAllRead().notice()) }) { Text(tr(AppStrings.mark_all_as_read_203c3f)) }
+                    error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
+                    val rows = archive.events.filter { e -> (transport == "choice:all_778fc8" || e.transport == transport) && (selectedDevice.isEmpty() || e.deviceId == selectedDevice) &&
+                        (filter == "choice:all_778fc8" || filter == "choice:unread_1e230a" && !e.read || filter == "choice:needs_attention_59a9eb" && e.warning && !e.acknowledged) &&
+                        (diagnosticText(e.title) + e.deviceName + diagnosticText(e.detail)).contains(query, true) }
+                    if (rows.isEmpty()) Panel { Text(tr(AppStrings.no_matching_events_8ccc71)); Text(tr(AppStrings.connect_or_operate_a_device_to_see_real_events_here_a9acdd), color = Muted) }
+                    rows.take(limit).forEach { e -> key(e.id) { Item((if (!e.read) "● " else "") + diagnosticText(e.title),
+                        "${e.deviceName} · ${e.transport} · ${timeLabel(e.timestamp)}${if (e.count > 1) tr(AppStrings.occurrences_aa7812, e.count) else ""}") {
                         go(Route(Screen.EVENT, e.id))
                     } } }
-                    if (rows.size > limit) TextButton(onClick = { limit += 50 }) { Text("加载更多") }
+                    if (rows.size > limit) TextButton(onClick = { limit += 50 }) { Text(tr(AppStrings.load_more_3a0fab)) }
                 } else {
                     val records by activity.records.collectAsState()
-                    Text("最近 ${records.size} 条 · 仅当前运行期间保留 · 原始负载默认隐藏", color = Muted)
-                    val rows = records.filter { r -> (transport == "全部" || r.transport == transport) && (selectedDevice.isEmpty() || r.deviceId == selectedDevice) && (r.deviceName + r.operation + r.address).contains(query, true) }
-                    if (rows.isEmpty()) Text("暂无通信记录", color = Muted)
+                    Text(tr(AppStrings.latest_current_app_session_only_raw_payloads_hidden_by_321956, records.size), color = Muted)
+                    val rows = records.filter { r -> (transport == "choice:all_778fc8" || r.transport == transport) && (selectedDevice.isEmpty() || r.deviceId == selectedDevice) && (r.deviceName + r.operation + r.address).contains(query, true) }
+                    if (rows.isEmpty()) Text(tr(AppStrings.no_traffic_yet_566bf8), color = Muted)
                     rows.take(limit).forEach { r -> key(r.id) { Item("${r.transport} · ${r.operation}", "${r.deviceName} · ${r.address.take(80)} · ${timeLabel(r.timestamp)}") { go(Route(Screen.ACTIVITY_RECORD, r.id)) } } }
-                    if (rows.size > limit) TextButton(onClick = { limit += 50 }) { Text("加载更多") }
+                    if (rows.size > limit) TextButton(onClick = { limit += 50 }) { Text(tr(AppStrings.load_more_3a0fab)) }
                 }
-                Item("连接管理", "查看设备会话，主动连接或停止") { go(Route(Screen.SUBSCRIPTIONS)) }
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error); TextButton(onClick = activity::retrySave) { Text("重试保存") } }
-                if (saving) Text("本地更改正在保存…", color = Muted)
+                Item(tr(AppStrings.connections_16f545), tr(AppStrings.view_device_sessions_connect_or_stop_ccc8e0)) { go(Route(Screen.SUBSCRIPTIONS)) }
+                error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error); TextButton(onClick = activity::retrySave) { Text(tr(AppStrings.retry_saving_c47e26)) } }
+                if (saving) Text(tr(AppStrings.saving_local_changes_438efa), color = Muted)
             }
         }
         Screen.EVENT -> {
@@ -83,105 +84,105 @@ fun ActivityPages(route: Route, activity: ActivityRepository, workspace: DeviceW
             LaunchedEffect(activity, e?.id) {
                 e?.let { readNotice = activity.markRead(it.id).notice() }
             }
-            Page("EVENT", e?.title ?: "事件已清理", "本地事件详情") {
+            Page("EVENT", e?.title?.let(::diagnosticText) ?: tr(AppStrings.event_removed_dbe6a6), tr(AppStrings.local_event_details_45670b)) {
                 if (e != null) {
                     Panel {
-                        KeyValue("设备", e.deviceName); KeyValue("来源", e.transport); KeyValue("最后发生", timeLabel(e.timestamp))
-                        KeyValue("次数", e.count.toString()); Text(e.detail)
-                        Text(if (e.read) "已读" else "未读", color = Muted)
+                        KeyValue(tr(AppStrings.devices_01f2c1), e.deviceName); KeyValue(tr(AppStrings.source_c63f79), e.transport); KeyValue(tr(AppStrings.last_occurred_c4dfc8), timeLabel(e.timestamp))
+                        KeyValue(tr(AppStrings.occurrences_d4a97e), e.count.toString()); Text(diagnosticText(e.detail))
+                        Text(if (e.read) tr(AppStrings.read_642ec8) else tr(AppStrings.unread_1e230a), color = Muted)
                     }
-                    TextButton(onClick = { readNotice = activity.markRead(e.id, !e.read).notice() }) { Text(if (e.read) "标为未读" else "标为已读") }
-                    readNotice?.let { Text(it, color = Muted) }
-                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    if (saving) Text("已读更改正在保存到本机…", color = Muted)
-                    if (e.warning) Primary(if (e.acknowledged) "已确认" else "确认已处理", !e.acknowledged) { activity.acknowledge(e.id) }
-                    Text("确认只更新本机记录，不发送设备命令。", color = Muted)
+                    TextButton(onClick = { readNotice = activity.markRead(e.id, !e.read).notice() }) { Text(if (e.read) tr(AppStrings.mark_unread_64d2bc) else tr(AppStrings.mark_read_b1971f)) }
+                    readNotice?.let { Text(diagnosticText(it), color = Muted) }
+                    error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
+                    if (saving) Text(tr(AppStrings.saving_read_status_locally_341f6f), color = Muted)
+                    if (e.warning) Primary(if (e.acknowledged) tr(AppStrings.acknowledged_d9fea6) else tr(AppStrings.mark_resolved_b1f9fb), !e.acknowledged) { activity.acknowledge(e.id) }
+                    Text(tr(AppStrings.acknowledgment_updates_local_records_only_no_device_com_2356b4), color = Muted)
                     val r = records.firstOrNull { it.id == e.recordId }
-                    if (r != null) Item("关联通信记录", r.operation) { go(Route(Screen.ACTIVITY_RECORD, r.id)) }
-                    else Text("原始通信记录未保留或已过期。", color = Muted)
-                    if (devices.any { it.id == e.deviceId }) Item("打开设备", e.deviceName) { go(Route(Screen.DEVICE, e.deviceId)) }
-                    else Text(if (e.deviceId.isEmpty()) "来源为 MQTT 工作台" else "设备已删除，保留历史名称。", color = Muted)
+                    if (r != null) Item(tr(AppStrings.related_traffic_record_ab7a12), r.operation) { go(Route(Screen.ACTIVITY_RECORD, r.id)) }
+                    else Text(tr(AppStrings.the_raw_traffic_record_was_not_kept_or_has_expired_6fafc3), color = Muted)
+                    if (devices.any { it.id == e.deviceId }) Item(tr(AppStrings.open_device_487957), e.deviceName) { go(Route(Screen.DEVICE, e.deviceId)) }
+                    else Text(if (e.deviceId.isEmpty()) tr(AppStrings.from_mqtt_workbench_184104) else tr(AppStrings.device_deleted_keeping_its_historical_name_eeece3), color = Muted)
                 }
             }
         }
         Screen.ACTIVITY_RECORD -> {
             val r = records.firstOrNull { it.id == route.id }
-            Page("TRAFFIC DETAIL", r?.operation ?: "通信记录已过期", "诊断记录不等同于设备执行回执。") {
+            Page("TRAFFIC DETAIL", r?.operation ?: tr(AppStrings.traffic_record_expired_5b1ec9), tr(AppStrings.diagnostic_records_are_not_device_execution_receipts_d046b8)) {
                 r?.let {
-                    Panel { KeyValue("设备", it.deviceName); KeyValue("传输", it.transport); KeyValue("时间", timeLabel(it.timestamp)); KeyValue("字节数", it.byteCount.toString())
-                        SelectionContainer { Text(it.address) }; Text(it.detail) }
-                    Panel { Text("HEX（最多预览 512 字节）"); SelectionContainer { Text(it.payload ?: "负载未采集或已脱敏。可在数据管理中临时开启后续记录。") } }
-                    if (devices.any { d -> d.id == it.deviceId }) Item("打开设备", it.deviceName) { go(Route(Screen.DEVICE, it.deviceId)) }
+                    Panel { KeyValue(tr(AppStrings.devices_01f2c1), it.deviceName); KeyValue(tr(AppStrings.transport_14b6b3), it.transport); KeyValue(tr(AppStrings.time_89b4aa), timeLabel(it.timestamp)); KeyValue(tr(AppStrings.byte_count_7fd5ef), it.byteCount.toString())
+                        SelectionContainer { Text(it.address) }; Text(diagnosticText(it.detail)) }
+                    Panel { Text(tr(AppStrings.hex_up_to_512_bytes_b4c135)); SelectionContainer { Text(it.payload ?: tr(AppStrings.payload_not_captured_or_redacted_enable_temporary_captu_773fea)) } }
+                    if (devices.any { d -> d.id == it.deviceId }) Item(tr(AppStrings.open_device_487957), it.deviceName) { go(Route(Screen.DEVICE, it.deviceId)) }
                 }
             }
         }
-        Screen.MORE -> Page("YOUR WORKSPACE", "我的", "本地设备工作台 · 无需云端账号") {
-            Panel { Text("${devices.size} 台设备 · ${archive.templates.size} 个面板模板"); Text("${archive.events.count { !it.read }} 条未读事件", color = Muted) }
-            Item("连接管理", "切页保持前台连接，可随时停止") { go(Route(Screen.SUBSCRIPTIONS)) }
-            Item("MQTT 连接配置", "地址、身份验证与 Client ID") { go(Route(Screen.MQTT_PROFILES)) }
-            Item("面板模板", "真实面板配置的保存、导入与导出") { go(Route(Screen.PRESETS)) }
-            Item("消息偏好", "连接事件记录与系统通知支持范围") { go(Route(Screen.NOTIFICATIONS)) }
-            Item("通信记录", "BLE / MQTT 的真实收发记录") { go(Route(Screen.EVENTS, "traffic")) }
-            Item("数据管理", "保留期限、诊断负载与清理") { go(Route(Screen.DATA_SETTINGS)) }
-            Item("外观", "显示模式与主题色") { go(Route(Screen.SETTINGS)) }
-            Item("开发者设置", "协议、组件、绑定与离线试算") { go(Route(Screen.DEVELOPER_SETTINGS)) }
-            Item("关于与帮助", "平台、配置兼容性与使用说明") { go(Route(Screen.ABOUT)) }
+        Screen.MORE -> Page("YOUR WORKSPACE", tr(AppStrings.my_workspace_a82c99), tr(AppStrings.local_device_workspace_no_cloud_account_required_d28356)) {
+            Panel { Text(tr(AppStrings.devices_panel_templates_eeb6b7, devices.size, archive.templates.size)); Text(tr(AppStrings.unread_events_18f303, archive.events.count { !it.read }), color = Muted) }
+            Item(tr(AppStrings.connections_16f545), tr(AppStrings.connections_survive_navigation_stop_them_any_time_52d502)) { go(Route(Screen.SUBSCRIPTIONS)) }
+            Item(tr(AppStrings.mqtt_profiles_b4aeb6), tr(AppStrings.address_authentication_and_client_id_ebbff0)) { go(Route(Screen.MQTT_PROFILES)) }
+            Item(tr(AppStrings.panel_templates_4fb3e5), tr(AppStrings.save_import_and_export_real_panel_configurations_065df7)) { go(Route(Screen.PRESETS)) }
+            Item(tr(AppStrings.message_preferences_0db69c), tr(AppStrings.connection_events_and_system_notification_support_914da4)) { go(Route(Screen.NOTIFICATIONS)) }
+            Item(tr(AppStrings.traffic_7c4ff3), tr(AppStrings.actual_ble_mqtt_traffic_e1b94f)) { go(Route(Screen.EVENTS, "traffic")) }
+            Item(tr(AppStrings.data_management_d97701), tr(AppStrings.retention_diagnostic_payloads_and_cleanup_e1c179)) { go(Route(Screen.DATA_SETTINGS)) }
+            Item(tr(AppStrings.message_app_settings_0c79c2), tr(AppStrings.settings_summary)) { go(Route(Screen.SETTINGS)) }
+            Item(tr(AppStrings.developer_settings_8756ea), tr(AppStrings.protocols_widgets_bindings_and_offline_inspection_d1272b)) { go(Route(Screen.DEVELOPER_SETTINGS)) }
+            Item(tr(AppStrings.about_and_help_599ad7), tr(AppStrings.platforms_configuration_compatibility_and_usage_e9a485)) { go(Route(Screen.ABOUT)) }
         }
-        Screen.SUBSCRIPTIONS, Screen.SUBSCRIPTION -> Page("CONNECTIONS", "连接管理", "前台切页继续收取，后台策略由平台决定。") {
-            if (devices.isEmpty()) Text("还没有设备", color = Muted)
+        Screen.SUBSCRIPTIONS, Screen.SUBSCRIPTION -> Page("CONNECTIONS", tr(AppStrings.connections_16f545), tr(AppStrings.foreground_navigation_keeps_receiving_background_behavi_30b8f6)) {
+            if (devices.isEmpty()) Text(tr(AppStrings.no_devices_yet_af18f0), color = Muted)
             devices.forEach { d ->
                 val panel = workspace.panel(d.id)
                 if (panel != null) {
                     val state by remember(panel) { panel.connectionStates() }.collectAsState(panel.state.value.connectionChrome())
-                    val label = if (d.panel.transport == PanelTransport.DUAL) state.connectedTransports.joinToString { it.name }.ifEmpty { "未连接" } else if (state.ready) "${d.panel.transport} 已连接" else "未连接"
+                    val label = if (d.panel.transport == PanelTransport.DUAL) state.connectedTransports.joinToString { it.name }.ifEmpty { tr(AppStrings.disconnected_f2f3e9) } else if (state.ready) tr(AppStrings.connected_84eb88, d.panel.transport) else tr(AppStrings.disconnected_f2f3e9)
                     Panel { Text(d.name); Text(label, color = Muted)
-                        Row { TextButton(onClick = { go(Route(Screen.DEVICE, d.id)) }) { Text("打开设备 / 连接") }
-                            TextButton(enabled = state.ready || state.busy || state.connectingTransports.isNotEmpty(), onClick = { workspace.disconnect(d.id) }) { Text("停止连接") } }
+                        Row { TextButton(onClick = { go(Route(Screen.DEVICE, d.id)) }) { Text(tr(AppStrings.open_device_connect_89b8f1)) }
+                            TextButton(enabled = state.ready || state.busy || state.connectingTransports.isNotEmpty(), onClick = { workspace.disconnect(d.id) }) { Text(tr(AppStrings.stop_connection_878f8c)) } }
                     }
                 }
             }
-            Item("MQTT 工作台", "独立调试会话，请在工作台连接或停止") { go(Route(Screen.MQTT)) }
-            Text("尚未提供后台持续监测服务与阈值规则；这里管理真实连接。", color = Muted)
+            Item(tr(AppStrings.mqtt_workbench_3aa6fb), tr(AppStrings.separate_debug_session_connect_or_stop_in_the_workbench_619801)) { go(Route(Screen.MQTT)) }
+            Text(tr(AppStrings.continuous_background_monitoring_and_threshold_rules_ar_4b284e), color = Muted)
         }
-        Screen.NOTIFICATIONS -> Page("MESSAGE PREFERENCES", "消息偏好", "本地事件记录已接入；系统通知尚未启用。") {
-            Panel { Toggle("连接事件", "记录连接、主动停止与意外断开；错误与保存结果仍记录", archive.recordConnectionEvents, activity::setConnectionEvents) }
-            Text("暂不接入 FCM、APNs 或厂商推送。当前不会向系统发送通知，也不会请求通知权限。", color = Muted)
-            Text("设备阈值规则及后台常驻监测将在后续阶段提供。", color = Muted)
-            Item("查看真实消息", "本地记录与未读状态") { go(Route(Screen.EVENTS)) }
+        Screen.NOTIFICATIONS -> Page("MESSAGE PREFERENCES", tr(AppStrings.message_preferences_0db69c), tr(AppStrings.local_event_recording_is_enabled_system_notifications_a_9777e1)) {
+            Panel { Toggle(tr(AppStrings.connection_events_6edc4d), tr(AppStrings.record_connections_and_disconnections_errors_and_save_r_6ffe46), archive.recordConnectionEvents, activity::setConnectionEvents) }
+            Text(tr(AppStrings.fcm_apns_and_vendor_push_are_not_integrated_no_system_n_d77af9), color = Muted)
+            Text(tr(AppStrings.device_threshold_rules_and_continuous_background_monito_b31573), color = Muted)
+            Item(tr(AppStrings.view_messages_5c8222), tr(AppStrings.local_records_and_unread_status_7c3509)) { go(Route(Screen.EVENTS)) }
         }
         Screen.DATA_SETTINGS -> {
             val capture by activity.capturePayloads.collectAsState()
             var confirm by remember { mutableStateOf<String?>(null) }
-            Page("LOCAL DATA", "数据管理", "事件摘要持久保存；通信负载不写入本地档案。") {
+            Page("LOCAL DATA", tr(AppStrings.data_management_d97701), tr(AppStrings.event_summaries_are_persisted_traffic_payloads_are_not_3b675d)) {
                 Panel {
-                    Text("事件 ${archive.events.size}/1000 · 临时通信 ${records.size}/500 · 模板 ${archive.templates.size}/20")
-                    Text("保留期限（缩短会清理过期事件）")
-                    Choices(listOf("7 天", "30 天", "90 天"), "${archive.retentionDays} 天") { confirm = "retention:${it.substringBefore(' ')}" }
-                    Toggle("临时采集通信负载", "可能包含隐私，仅当前运行有效；关闭后清除预览，设备配网数据始终隐藏", capture, activity::setCapturePayloads)
+                    Text(tr(AppStrings.events_1000_temporary_traffic_500_templates_20_e7ed43, archive.events.size, records.size, archive.templates.size))
+                    Text(tr(AppStrings.retention_shortening_removes_expired_events_e8315b))
+                    RetentionChoices(listOf("7", "30", "90"), archive.retentionDays.toString()) { confirm = "retention:${it.substringBefore(' ')}" }
+                    Toggle(tr(AppStrings.temporarily_capture_payloads_9888ff), tr(AppStrings.may_contain_private_data_current_session_only_turning_o_a59053), capture, activity::setCapturePayloads)
                 }
-                OutlinedButton(onClick = { confirm = "events" }) { Text("清空事件与未读记录") }
-                OutlinedButton(onClick = { confirm = "traffic" }) { Text("清空临时通信记录") }
-                Text("不会删除设备、连接凭据或面板模板。平台备份与浏览器清理可能影响本地数据。", color = Muted)
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error); TextButton(onClick = activity::retrySave) { Text("重试保存") } }
-                if (saving) Text("正在保存…", color = Muted)
+                OutlinedButton(onClick = { confirm = "events" }) { Text(tr(AppStrings.clear_events_and_unread_records_27ff64)) }
+                OutlinedButton(onClick = { confirm = "traffic" }) { Text(tr(AppStrings.clear_temporary_traffic_49bc43)) }
+                Text(tr(AppStrings.devices_credentials_and_templates_are_kept_platform_bac_c3a5ff), color = Muted)
+                error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error); TextButton(onClick = activity::retrySave) { Text(tr(AppStrings.retry_saving_c47e26)) } }
+                if (saving) Text(tr(AppStrings.saving_9ca32f), color = Muted)
             }
-            confirm?.let { action -> AlertDialog(onDismissRequest = { confirm = null }, title = { Text("确认清理？") }, text = { Text("清理后的记录无法恢复；设备配置保持不变。") },
-                confirmButton = { TextButton(onClick = { when { action == "events" -> activity.clearEvents(); action == "traffic" -> activity.clearRecords(); else -> activity.setRetention(action.substringAfter(':').toInt()) }; confirm = null }) { Text("确认") } },
-                dismissButton = { TextButton(onClick = { confirm = null }) { Text("取消") } }) }
+            confirm?.let { action -> AlertDialog(onDismissRequest = { confirm = null }, title = { Text(tr(AppStrings.confirm_cleanup_b7dc7a)) }, text = { Text(tr(AppStrings.deleted_records_cannot_be_recovered_device_configuratio_21fb63)) },
+                confirmButton = { TextButton(onClick = { when { action == "events" -> activity.clearEvents(); action == "traffic" -> activity.clearRecords(); else -> activity.setRetention(action.substringAfter(':').toInt()) }; confirm = null }) { Text(tr(AppStrings.confirm_b56d9a)) } },
+                dismissButton = { TextButton(onClick = { confirm = null }) { Text(tr(AppStrings.cancel_4d0b46)) } }) }
         }
         Screen.PRESETS, Screen.PRESET, Screen.TRANSFER -> TemplatePages(route, activity, workspace, go, feedback)
         Screen.API -> LaunchedEffect(Unit) { go(Route(Screen.MQTT_PROFILES)) }
-        Screen.ABOUT -> Page("THINGSTALK", "关于与帮助", "协议驱动的本地设备工作台") {
-            Panel { KeyValue("平台", getPlatform().name); KeyValue("构建", appBuildLabel()); KeyValue("消息模块", "20261031-read3"); KeyValue("配置", "支持 schemaVersion 1–7；设置面板扩展修订 20")
-                KeyValue("连接", if (platformCapabilities().ble) "BLE / MQTT 5 · WS/WSS" else "MQTT 5 · WS/WSS") }
-            Section("使用帮助")
-            Text("MQTT 已连接只表示 Broker 接受登录。收不到设备状态时，请检查硬件在线状态、topic 中设备名和订阅权限。")
-            Text("设备配网先准备访问，完成系统配对后读取。配置已保存不等于 Wi-Fi / MQTT 已连通。")
-            Text("切换 App 内页面不再断开设备连接；后台仍可能暂停。没有服务器事件补收或远程推送保证。")
-            Item("消息与诊断", "查看实际发生的错误及关联记录") { go(Route(Screen.EVENTS)) }
-            Item("开源组件与许可证", "Kotlin / Compose / Ktor / Kable / ktor-mqtt") { go(Route(Screen.LICENSES)) }
+        Screen.ABOUT -> Page("THINGSTALK", tr(AppStrings.about_and_help_599ad7), tr(AppStrings.a_protocol_driven_local_device_workspace_679064)) {
+            Panel { KeyValue(tr(AppStrings.platform_e4b9d6), getPlatform().name); KeyValue(tr(AppStrings.build_81a94d), appBuildLabel()); KeyValue(tr(AppStrings.message_module_4ac8bb), "20261031-read3"); KeyValue(tr(AppStrings.configuration_d7d7ce), tr(AppStrings.supports_schemaversion_1_7_setup_panel_extension_revisi_c0c7b4))
+                KeyValue(tr(AppStrings.connection_7328de), if (platformCapabilities().ble) "BLE / MQTT 5 · WS/WSS" else "MQTT 5 · WS/WSS") }
+            Section(tr(AppStrings.help_ef33df))
+            Text(tr(AppStrings.mqtt_connected_means_the_broker_accepted_login_if_state_039d18))
+            Text(tr(AppStrings.prepare_device_access_before_provisioning_complete_syst_d7603d))
+            Text(tr(AppStrings.navigating_within_the_app_keeps_connections_background_ac599a))
+            Item(tr(AppStrings.messages_and_diagnostics_03a9b8), tr(AppStrings.view_actual_errors_and_related_records_e0baec)) { go(Route(Screen.EVENTS)) }
+            Item(tr(AppStrings.open_source_components_and_licenses_56c472), "Kotlin / Compose / Ktor / Kable / ktor-mqtt") { go(Route(Screen.LICENSES)) }
         }
-        Screen.LICENSES -> Page("OPEN SOURCE", "开源组件", "许可证原文与第三方声明以对应依赖版本的发行包为准。") {
+        Screen.LICENSES -> Page("OPEN SOURCE", tr(AppStrings.open_source_components_c71482), tr(AppStrings.refer_to_each_dependency_version_s_distribution_for_lic_1dffbf)) {
             SelectionContainer { Text("Kotlin、Compose Multiplatform、Ktor、AndroidX：Apache-2.0\nKable：Apache-2.0\nktor-mqtt：Apache-2.0\n\nhttps://github.com/JetBrains/kotlin\nhttps://github.com/JetBrains/compose-multiplatform\nhttps://github.com/ktorio/ktor\nhttps://github.com/JuulLabs/kable\nhttps://github.com/ukemp/ktor-mqtt") }
         }
         else -> Unit

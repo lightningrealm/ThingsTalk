@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.panel
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,24 +25,24 @@ internal fun DualPanelBindingEditor(
             stateTransport = next.stateTransport?.takeIf { it in sources } ?: sources.firstOrNull()))
     }
     if (!channelPanel) Panel {
-        Text("控制通道与状态来源分别选择；不会自动切换通道或重发命令。")
+        Text(tr(AppStrings.select_control_and_state_channels_separately_channels_n_7d4123))
         if (binding.write != null || binding.publish != null) {
-            Text("控制通道")
+            Text(tr(AppStrings.control_channel_cdcfeb))
             Choices(listOfNotNull("BLE".takeIf { binding.write != null }, "MQTT".takeIf { binding.publish != null }), binding.controlTransport?.name.orEmpty()) {
                 update(binding.copy(controlTransport = PanelTransport.valueOf(it)))
             }
         }
         if (binding.read != null || binding.notify != null || binding.subscribe != null) {
-            Text("状态来源")
+            Text(tr(AppStrings.state_source_377857))
             Choices(listOfNotNull("BLE".takeIf { binding.read != null || binding.notify != null }, "MQTT".takeIf { binding.subscribe != null }), binding.stateTransport?.name.orEmpty()) {
                 update(binding.copy(stateTransport = PanelTransport.valueOf(it)))
             }
         }
     }
     TransportTabs(selected, { selected = it },
-        if (binding.read != null || binding.write != null || binding.notify != null) "已配置绑定" else "未配置绑定",
-        if (binding.publish != null || binding.subscribe != null) "已配置绑定" else "未配置绑定")
-    Text(if (channelPanel) "分别定义两个通道的操作。展示页切换通道后，组件使用对应绑定；未配置的操作不可用。" else "标签只切换编辑内容，不改变上方控制通道和状态来源。两边共用组件与数据格式。", color = Muted)
+        if (binding.read != null || binding.write != null || binding.notify != null) tr(AppStrings.binding_configured_08e00a) else tr(AppStrings.no_binding_configured_1785a7),
+        if (binding.publish != null || binding.subscribe != null) tr(AppStrings.binding_configured_08e00a) else tr(AppStrings.no_binding_configured_1785a7))
+    Text(if (channelPanel) tr(AppStrings.define_each_channel_separately_switching_channels_on_th_20e77a) else tr(AppStrings.tabs_only_switch_the_editor_control_and_state_routing_a_f366cc), color = Muted)
     TransportTabContent(selected,
         ble = { PanelBindingEditor(capability, binding, services, formats, ::update) },
         mqtt = { MqttPanelBindingEditor(capability, binding, formats, ::update) })

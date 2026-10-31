@@ -18,8 +18,8 @@ class AppearanceTest {
     @Test fun persistedChoiceSurvivesRecreation() = runTest {
         val storage = MemoryStorage()
         val repository = StoredAppearanceRepository(storage)
-        for (mode in ThemeMode.entries) for (palette in ThemePalette.entries) {
-            val expected = Appearance(mode, palette)
+        for (mode in ThemeMode.entries) for (palette in ThemePalette.entries) for (language in LanguagePreference.entries) {
+            val expected = Appearance(mode, palette, language)
             repository.save(expected)
             assertEquals(expected, StoredAppearanceRepository(storage).appearance.value)
         }

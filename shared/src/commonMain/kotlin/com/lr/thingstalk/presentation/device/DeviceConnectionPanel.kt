@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.device
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,19 +38,19 @@ fun DeviceConnectionPanel(
         val selected = if (channelPanel) state.activeChannel ?: requireNotNull(state.definition.defaultChannel) else settingsTab
         fun enabled(channel: PanelTransport) = dual || device.panel.transport == channel
         fun status(channel: PanelTransport) = when {
-            !enabled(channel) -> "未启用"
-            channel in state.connectingTransports || (!dual && state.busy && !state.ready) -> "连接中"
-            channel in state.connectedTransports || (!dual && state.ready) -> "已连接"
-            else -> "未连接"
+            !enabled(channel) -> tr(AppStrings.disabled_8bb38e)
+            channel in state.connectingTransports || (!dual && state.busy && !state.ready) -> tr(AppStrings.connecting_699ade)
+            channel in state.connectedTransports || (!dual && state.ready) -> tr(AppStrings.connected_65fe35)
+            else -> tr(AppStrings.disconnected_f2f3e9)
         }
         TransportTabs(selected, { if (channelPanel) panel.selectChannel(it) else settingsTab = it }, status(PanelTransport.BLE), status(PanelTransport.MQTT))
-        Text(if (channelPanel) "${selected.name} 通道 · 下方组件使用此通道的绑定" else "连接设置 · 组件通信通道由面板配置决定", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Text(if (channelPanel) tr(AppStrings.channel_widgets_below_use_this_channel_s_bindings_b64e5f, selected.name) else tr(AppStrings.connection_settings_widget_routing_is_defined_by_the_pa_39ac13), color = Muted, style = MaterialTheme.typography.bodySmall)
         @Composable fun inactive(channel: PanelTransport) {
             Panel {
-                Text("尚未启用 ${channel.name}", style = MaterialTheme.typography.titleMedium)
-                Text("启用后，此设备可同时配置 BLE 与 MQTT，现有组件与绑定会保留。升级会断开当前连接，完成后请重新连接。", color = Muted)
-                Primary("启用 ${channel.name} · 升级为双连接", !workspaceStatus.busy) { workspace.promoteToDual(device.id) }
-                workspaceStatus.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                Text(tr(AppStrings.is_not_enabled_4d7ae3, channel.name), style = MaterialTheme.typography.titleMedium)
+                Text(tr(AppStrings.enabling_adds_ble_and_mqtt_support_while_preserving_wid_8a6148), color = Muted)
+                Primary(tr(AppStrings.enable_upgrade_to_dual_connection_a54e35, channel.name), !workspaceStatus.busy) { workspace.promoteToDual(device.id) }
+                workspaceStatus.error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
             }
         }
         TransportTabContent(selected,
@@ -84,32 +85,32 @@ private fun BleDeviceConnectionPanel(
         Tag(device.name)
         val target = device.bleTarget
         if (target == null) {
-            Text("还未关联蓝牙外设", style = MaterialTheme.typography.titleMedium)
-            Text("可以先添加组件。关联并连接外设后，再从发现的服务和特征中绑定操作。", color = Muted)
-            Primary("选择蓝牙外设", !status.busy, onScan)
+            Text(tr(AppStrings.no_ble_peripheral_linked_yet_7eb6d7), style = MaterialTheme.typography.titleMedium)
+            Text(tr(AppStrings.you_can_add_widgets_first_link_and_connect_a_peripheral_3e7a7d), color = Muted)
+            Primary(tr(AppStrings.choose_ble_peripheral_cf4296), !status.busy, onScan)
         } else {
-            Text(target.name ?: "未命名 BLE 外设", style = MaterialTheme.typography.titleMedium)
+            Text(target.name ?: tr(AppStrings.unnamed_ble_peripheral_39b9cd), style = MaterialTheme.typography.titleMedium)
             if (showDeveloperTools) Text(target.id, style = MaterialTheme.typography.bodySmall, color = Muted)
-            Text(if (ready) "已连接 · ${state.services.size} 个服务" else "未连接", color = Muted)
+            Text(if (ready) tr(AppStrings.connected_services_2df8bb, state.services.size) else tr(AppStrings.disconnected_f2f3e9), color = Muted)
             if (!access.canConnect) {
-                Text(access.status, color = Muted)
-                access.actionLabel?.let { label -> Primary(label) { access.requestAccess() } }
+                Text(diagnosticText(access.status), color = Muted)
+                access.actionLabel?.let { label -> Primary(diagnosticText(label)) { access.requestAccess() } }
             }
-            Primary(if (ready) "断开连接" else if (busy && !state.saving) "正在连接或通信…" else "连接外设", !busy && (ready || access.canConnect)) {
+            Primary(if (ready) tr(AppStrings.disconnect_eb7246) else if (busy && !state.saving) tr(AppStrings.connecting_or_communicating_120446) else tr(AppStrings.connect_peripheral_b95c34), !busy && (ready || access.canConnect)) {
                 workspace.scan.stop()
                 if (ready) workspace.disconnectBle(device.id) else workspace.connect(device.id)
             }
-            Text("优先尝试已保存的设备标识；系统找不到设备或连接超时时，可重新扫描关联。连接后读取并订阅已配置的特征，写入由控件触发。", style = MaterialTheme.typography.bodySmall, color = Muted)
+            Text(tr(AppStrings.tries_the_saved_device_identifier_first_rescan_if_the_d_d77501), style = MaterialTheme.typography.bodySmall, color = Muted)
             Row {
-                TextButton(onClick = onScan, enabled = !busy) { Text("重新扫描 / 更换外设") }
-                TextButton(onClick = { workspace.associate(device.id, null) }, enabled = !busy && !status.busy) { Text("解除关联") }
+                TextButton(onClick = onScan, enabled = !busy) { Text(tr(AppStrings.rescan_change_peripheral_94872a)) }
+                TextButton(onClick = { workspace.associate(device.id, null) }, enabled = !busy && !status.busy) { Text(tr(AppStrings.unlink_25a139)) }
             }
         }
         if (showDeveloperTools) {
             HorizontalDivider()
-            Item("服务与特征", "浏览 GATT 结构、HEX 读写与通知", onClick = onDebug)
-            Item("收发日志", "查看此设备面板和调试操作的记录", onClick = onLogs)
+            Item(tr(AppStrings.services_and_characteristics_36f76b), tr(AppStrings.browse_gatt_read_write_hex_and_receive_notifications_cb98ad), onClick = onDebug)
+            Item(tr(AppStrings.traffic_log_c1c823), tr(AppStrings.view_this_device_s_panel_and_debugger_traffic_8266cf), onClick = onLogs)
         }
-        status.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        status.error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
     }
 }

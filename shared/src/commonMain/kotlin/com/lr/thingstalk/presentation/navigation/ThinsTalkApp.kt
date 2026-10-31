@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.navigation
 
+import com.lr.thingstalk.presentation.i18n.*
 import com.lr.thingstalk.presentation.activity.*
 import com.lr.thingstalk.domain.activity.ActivityRepository
 import com.lr.thingstalk.di.createMqttProfilesViewModel
@@ -40,8 +41,10 @@ fun ThinsTalkApp() {
     val appearance = viewModel { createAppearanceViewModel() }
     val settings by appearance.appearance.collectAsState()
     val profiles = viewModel { createMqttProfilesViewModel() }
-    CompositionLocalProvider(LocalMqttProfiles provides profiles) {
-        ThinsTalkTheme(settings) { ThemedApp(appearance) }
+    LanguageEnvironment(settings.language) {
+        CompositionLocalProvider(LocalMqttProfiles provides profiles) {
+            ThinsTalkTheme(settings) { ThemedApp(appearance) }
+        }
     }
 }
 
@@ -57,9 +60,9 @@ private fun ThemedApp(appearance: AppearanceViewModel) {
     if (loaded == null) {
         Surface(Modifier.fillMaxSize(), color = Paper) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).imePadding()) {
-                Page("LOCAL WORKSPACE", "设备配置暂时无法读取", "已有数据会保留，不会自动清空。") {
-                    Text(error ?: "正在准备…")
-                    Primary("重新读取") { host.retry() }
+                Page("LOCAL WORKSPACE", tr(AppStrings.device_configuration_unavailable_2ab358), tr(AppStrings.existing_data_is_kept_and_will_not_be_cleared_automatic_4a5426)) {
+                    Text(error?.let(::diagnosticText) ?: tr(AppStrings.preparing_572335))
+                    Primary(tr(AppStrings.reload_778497)) { host.retry() }
                 }
             }
         }
@@ -95,15 +98,15 @@ private fun DeviceWorkspaceApp(
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val message: (String) -> Unit = { scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
-    val destinations = remember(capabilities) {
+    val destinations = remember(capabilities, UiLanguage.current) {
         buildList {
-            add(AppDestination(Screen.DEVICES, "设备", "device"))
+            add(AppDestination(Screen.DEVICES, tr(AppStrings.devices_01f2c1), "device"))
             if (capabilities.ble) {
-                add(AppDestination(Screen.NEARBY, "发现", "bluetooth"))
+                add(AppDestination(Screen.NEARBY, tr(AppStrings.discover_523e40), "bluetooth"))
             }
             if (capabilities.mqtt) add(AppDestination(Screen.MQTT, "MQTT", "mqtt"))
-            add(AppDestination(Screen.EVENTS, "消息", "events"))
-            add(AppDestination(Screen.MORE, "我的", "more"))
+            add(AppDestination(Screen.EVENTS, tr(AppStrings.messages_dc6de3), "events"))
+            add(AppDestination(Screen.MORE, tr(AppStrings.my_workspace_a82c99), "more"))
         }
     }
     val roots = destinations.map { it.screen }
@@ -112,7 +115,7 @@ private fun DeviceWorkspaceApp(
         val editor = current?.takeIf { it.screen == Screen.PANEL_EDITOR }?.let { workspace.editor(it.id) }
         val panelSaving = current?.takeIf { it.screen == Screen.PANEL_EDITOR }?.let { workspace.panel(it.id)?.state?.value?.saving } == true
         when {
-            panelSaving || editor?.state?.value?.processingExit == true -> message("请等待保存完成后再离开")
+            panelSaving || editor?.state?.value?.processingExit == true -> message(tr(AppStrings.wait_for_saving_to_finish_before_leaving_38bde6))
             editor?.state?.value?.let { it.dirty || it.recovery != null } == true -> {
                 pendingEditor = editor
                 pendingNavigation = action
@@ -150,14 +153,14 @@ private fun DeviceWorkspaceApp(
     }
     AdaptiveAppFrame(
         badge = when (route.screen) {
-            Screen.SETTINGS -> "本地 · 外观"
-            Screen.MQTT -> "MQTT 5 · 实时"
-            Screen.MQTT_PROFILES, Screen.MQTT_PROFILE_EDITOR -> "MQTT · 连接配置"
-            Screen.NEARBY, Screen.SCAN_BINDING, Screen.GATT_SERVICES, Screen.GATT_CHARACTERISTIC, Screen.BLE_TRAFFIC -> "BLE · 实时"
-            Screen.DEVICES, Screen.DEVICE, Screen.DEVELOPER_SETTINGS, Screen.DEVICE_DEVELOPER, Screen.PANEL_EDITOR, Screen.DESCRIPTION, Screen.BLE_LOG_DEVICES -> "本地 · 自定义"
-            Screen.EVENTS, Screen.EVENT, Screen.ACTIVITY_RECORD -> "本地 · 真实记录"
-            Screen.MORE, Screen.SUBSCRIPTIONS, Screen.SUBSCRIPTION, Screen.DATA_SETTINGS, Screen.PRESETS, Screen.PRESET, Screen.TRANSFER, Screen.API, Screen.NOTIFICATIONS, Screen.ABOUT, Screen.LICENSES -> "本地 · 工作台"
-            else -> "MOCK · 演示"
+            Screen.SETTINGS -> tr(AppStrings.local_appearance_4cd2c7)
+            Screen.MQTT -> tr(AppStrings.mqtt_5_live_08e89a)
+            Screen.MQTT_PROFILES, Screen.MQTT_PROFILE_EDITOR -> tr(AppStrings.mqtt_profiles_c6bfc9)
+            Screen.NEARBY, Screen.SCAN_BINDING, Screen.GATT_SERVICES, Screen.GATT_CHARACTERISTIC, Screen.BLE_TRAFFIC -> tr(AppStrings.ble_live_81f6ef)
+            Screen.DEVICES, Screen.DEVICE, Screen.DEVELOPER_SETTINGS, Screen.DEVICE_DEVELOPER, Screen.PANEL_EDITOR, Screen.DESCRIPTION, Screen.BLE_LOG_DEVICES -> tr(AppStrings.local_custom_89a99d)
+            Screen.EVENTS, Screen.EVENT, Screen.ACTIVITY_RECORD -> tr(AppStrings.local_activity_32af60)
+            Screen.MORE, Screen.SUBSCRIPTIONS, Screen.SUBSCRIPTION, Screen.DATA_SETTINGS, Screen.PRESETS, Screen.PRESET, Screen.TRANSFER, Screen.API, Screen.NOTIFICATIONS, Screen.ABOUT, Screen.LICENSES -> tr(AppStrings.local_workspace_82cc95)
+            else -> tr(AppStrings.mock_demo_7379fe)
         },
         destinations = destinations,
         selected = root,
@@ -219,13 +222,13 @@ private fun DeviceWorkspaceApp(
                                 )
                                 destination.screen == Screen.DEVICES -> DeviceListPage(workspace, bleAvailable = capabilities.ble, initiallyCreating = destination.id == "create",
                                     onOpen = { go(Route(Screen.DEVICE, it)) }, onScan = { go(Route(Screen.NEARBY)) })
-                                destination.screen == Screen.DEVELOPER_SETTINGS -> Page("DEVELOPER SETTINGS", "协议与面板", "选择设备，定义收发报文、绑定组件，或导入导出配置文件。") {
+                                destination.screen == Screen.DEVELOPER_SETTINGS -> Page("DEVELOPER SETTINGS", tr(AppStrings.protocol_and_panel_623472), tr(AppStrings.choose_a_device_to_define_payloads_bind_widgets_or_impo_92aad8)) {
                                     if (devices.isEmpty()) Panel {
-                                        Text("先创建一台自定义设备，再为它配置协议与面板。", color = Muted)
-                                        Primary("前往我的设备") { go(Route(Screen.DEVICES)) }
+                                        Text(tr(AppStrings.create_a_custom_device_before_configuring_its_protocol_28c6da), color = Muted)
+                                        Primary(tr(AppStrings.go_to_my_devices_735f81)) { go(Route(Screen.DEVICES)) }
                                     }
                                     devices.forEach { device ->
-                                        Item(device.name, "${device.panel.widgets.size} 个组件 · ${device.panel.payloadFormats.size} 个数据格式") {
+                                        Item(device.name, tr(AppStrings.widgets_payload_formats_050a0e, device.panel.widgets.size, device.panel.payloadFormats.size)) {
                                             go(Route(Screen.DEVICE_DEVELOPER, device.id))
                                         }
                                     }
@@ -239,25 +242,25 @@ private fun DeviceWorkspaceApp(
                                         go(Route(Screen.DEVICE, id))
                                     },
                                 )
-                                destination.screen == Screen.BLE_LOG_DEVICES -> Page("BLE TRAFFIC", "设备通信日志", "面板和调试台的操作按设备分别记录。") {
+                                destination.screen == Screen.BLE_LOG_DEVICES -> Page("BLE TRAFFIC", tr(AppStrings.device_traffic_logs_5d7e9f), tr(AppStrings.panel_and_debugger_operations_are_recorded_per_device_ee82ea)) {
                                     if (devices.isEmpty()) Panel {
-                                        Text("还没有自定义设备。创建并连接外设后即可查看日志。", color = Muted)
-                                        Primary("前往我的设备") { go(Route(Screen.DEVICES)) }
+                                        Text(tr(AppStrings.no_custom_devices_yet_create_and_connect_a_peripheral_t_dc4233), color = Muted)
+                                        Primary(tr(AppStrings.go_to_my_devices_735f81)) { go(Route(Screen.DEVICES)) }
                                     }
                                     devices.forEach { device ->
-                                        Item(device.name, device.bleTarget?.let { it.name ?: "未命名 BLE 外设" } ?: "尚未关联外设") { go(Route(Screen.BLE_TRAFFIC, device.id)) }
+                                        Item(device.name, device.bleTarget?.let { it.name ?: tr(AppStrings.unnamed_ble_peripheral_39b9cd) } ?: tr(AppStrings.no_peripheral_linked_9c8499)) { go(Route(Screen.BLE_TRAFFIC, device.id)) }
                                     }
                                 }
                                 destination.screen in deviceScreens -> {
                                     val device = devices.firstOrNull { it.id == destination.id }
                                     val panel = workspace.panel(destination.id)
-                                    if (device == null || panel == null) Page("DEVICE", "设备不存在", "设备可能已删除，或此链接来自旧版演示页面。") {
-                                        Primary("返回我的设备") { go(Route(Screen.DEVICES)) }
+                                    if (device == null || panel == null) Page("DEVICE", tr(AppStrings.device_not_found_a578d8), tr(AppStrings.the_device_may_have_been_deleted_or_this_link_belongs_t_76838e)) {
+                                        Primary(tr(AppStrings.back_to_my_devices_9058be)) { go(Route(Screen.DEVICES)) }
                                     } else when (destination.screen) {
-                                        Screen.DEVICE_DEVELOPER -> Page("DEVICE DEVELOPER", device.name, "收发协议与面板配置集中在这里，保存后展示页会按配置运行。") {
-                                            Item("协议与面板编辑", "定义报文字段、绑定通信操作、配置组件与导入导出文件") { go(Route(Screen.PANEL_EDITOR, device.id)) }
-                                            Item("查看当前配置", "查看已保存的能力、数据格式和通信绑定") { go(Route(Screen.DESCRIPTION, device.id)) }
-                                            Item("打开设备面板", "使用当前已保存的面板") { go(Route(Screen.DEVICE, device.id)) }
+                                        Screen.DEVICE_DEVELOPER -> Page("DEVICE DEVELOPER", device.name, tr(AppStrings.configure_protocols_and_panels_here_the_device_page_use_c3fb39)) {
+                                            Item(tr(AppStrings.protocol_and_panel_editor_2d6ba1), tr(AppStrings.define_payloads_bind_operations_configure_widgets_and_i_681b3c)) { go(Route(Screen.PANEL_EDITOR, device.id)) }
+                                            Item(tr(AppStrings.view_current_configuration_4e3a97), tr(AppStrings.view_saved_capabilities_payload_formats_and_bindings_01ea38)) { go(Route(Screen.DESCRIPTION, device.id)) }
+                                            Item(tr(AppStrings.open_device_panel_bc3735), tr(AppStrings.use_the_currently_saved_panel_529d02)) { go(Route(Screen.DEVICE, device.id)) }
                                             DeviceConnectionPanel(device, panel, workspace,
                                                 onMqttProfiles = { go(Route(Screen.MQTT_PROFILES, device.id)) },
                                                 onScan = { go(Route(Screen.SCAN_BINDING, device.id)) },
@@ -317,24 +320,24 @@ private fun DeviceWorkspaceApp(
         }
         AlertDialog(
             onDismissRequest = { if (!editorState.processingExit) { pendingNavigation = null; pendingEditor = null } },
-            title = { Text("还有未应用的草稿") },
+            title = { Text(tr(AppStrings.unapplied_draft_0bb22c)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("可以保留在本机，下次打开此设备继续编辑；草稿不会自动应用到设备。")
-                    if (editorState.recovery != null) Text("保留会留下原有旧草稿，不覆盖当前设备配置。", color = Muted)
-                    editorState.checkpointError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    Text(tr(AppStrings.keep_it_locally_to_continue_editing_later_drafts_are_no_f04a7e))
+                    if (editorState.recovery != null) Text(tr(AppStrings.keeping_preserves_the_older_draft_without_replacing_the_981c68), color = Muted)
+                    editorState.checkpointError?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { leavingEditor.keepAndLeave(::finishNavigation) },
                     enabled = !editorState.processingExit) {
-                    Text(if (editorState.processingExit) "正在处理…" else "保留草稿并离开")
+                    Text(if (editorState.processingExit) tr(AppStrings.processing_ce9fd5) else tr(AppStrings.keep_draft_and_leave_6a93a2))
                 }
             },
             dismissButton = {
                 Row {
-                    TextButton(onClick = { leavingEditor.discard(::finishNavigation) }, enabled = !editorState.processingExit) { Text("丢弃并离开") }
-                    TextButton(onClick = { pendingNavigation = null; pendingEditor = null }, enabled = !editorState.processingExit) { Text("继续编辑") }
+                    TextButton(onClick = { leavingEditor.discard(::finishNavigation) }, enabled = !editorState.processingExit) { Text(tr(AppStrings.discard_and_leave_bfcffa)) }
+                    TextButton(onClick = { pendingNavigation = null; pendingEditor = null }, enabled = !editorState.processingExit) { Text(tr(AppStrings.continue_editing_3a481b)) }
                 }
             },
         )

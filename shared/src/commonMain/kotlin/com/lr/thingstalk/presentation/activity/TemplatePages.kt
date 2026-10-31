@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.activity
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
@@ -32,61 +33,61 @@ internal fun TemplatePages(route: Route, activity: ActivityRepository, workspace
     fun importText(text: String) {
         try {
             val panel = PanelJson.decode(text)
-            require(platformCapabilities().ble || panel.transport == PanelTransport.MQTT) { "Web 仅支持 MQTT 模板" }
+            require(platformCapabilities().ble || panel.transport == PanelTransport.MQTT) { tr(AppStrings.web_supports_mqtt_templates_only_afeec3) }
             source = PanelJson.encode(panel); title = panel.title; localError = null
-        } catch (_: Exception) { localError = "配置格式或平台类型不支持，请使用真实 ThingsTalk 面板文件。" }
+        } catch (_: Exception) { localError = tr(AppStrings.unsupported_format_or_platform_use_a_valid_thingstalk_p_7a1a41) }
     }
     val files = rememberPanelFileTransfer(::importText, feedback)
     val template = archive.templates.firstOrNull { it.id == route.id }
     if (route.screen == Screen.PRESET) {
         val definition = remember(template?.json) { template?.let { runCatching { PanelJson.decode(it.json) }.getOrNull() } }
-        Page("PANEL TEMPLATE", template?.title ?: "模板不存在", "应用前先载入编辑草稿，保存后才改变设备面板。") {
+        Page("PANEL TEMPLATE", template?.title ?: tr(AppStrings.template_not_found_ecb0c7), tr(AppStrings.load_an_editing_draft_first_the_device_panel_changes_on_2896e2)) {
             if (template != null && definition != null) {
-                Panel { KeyValue("传输", definition.transport.name); KeyValue("格式版本", definition.schemaVersion.toString()); KeyValue("组件", definition.widgets.size.toString()); KeyValue("设置表单", definition.setupPanels.size.toString()); Text(definition.setupImportNotice(), color = Muted) }
-                OutlinedButton(onClick = { files.exportFile(template.json, "panel-template.thingstalk.json") }, enabled = !files.busy) { Text("导出模板") }
-                Section("应用到设备")
+                Panel { KeyValue(tr(AppStrings.transport_14b6b3), definition.transport.name); KeyValue(tr(AppStrings.format_version_9d04be), definition.schemaVersion.toString()); KeyValue(tr(AppStrings.widgets_7359f0), definition.widgets.size.toString()); KeyValue(tr(AppStrings.setup_forms_000d28), definition.setupPanels.size.toString()); Text(definition.setupImportNotice(), color = Muted) }
+                OutlinedButton(onClick = { files.exportFile(template.json, "panel-template.thingstalk.json") }, enabled = !files.busy) { Text(tr(AppStrings.export_template_8bf525)) }
+                Section(tr(AppStrings.apply_to_device_c8fbec))
                 val eligible = devices.filter { it.panel.transport == definition.transport || it.panel.transport == PanelTransport.DUAL }
-                if (eligible.isEmpty()) Text("没有兼容设备；请先创建设备或升级为双连接。", color = Muted)
-                eligible.forEach { d -> Item(d.name, "将替换编辑草稿，设备标识和连接凭据保持不变") { targetId = d.id } }
-                OutlinedButton(onClick = { deleting = true }) { Text("删除此模板") }
-                Section("配置预览")
+                if (eligible.isEmpty()) Text(tr(AppStrings.no_compatible_devices_create_one_or_upgrade_to_dual_con_7fd725), color = Muted)
+                eligible.forEach { d -> Item(d.name, tr(AppStrings.replaces_the_editing_draft_device_identifiers_and_crede_aabc6c)) { targetId = d.id } }
+                OutlinedButton(onClick = { deleting = true }) { Text(tr(AppStrings.delete_template_36fb17)) }
+                Section(tr(AppStrings.configuration_preview_6c2397))
                 SelectionContainer { Text(template.json, style = MaterialTheme.typography.bodySmall) }
             }
-            localError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            localError?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
         }
-        targetId?.let { id -> AlertDialog(onDismissRequest = { targetId = null }, title = { Text("载入模板草稿？") },
-            text = { Text("将替换此设备当前编辑草稿，包括未保存修改。不会立即写入硬件；请在编辑页检查并保存。") },
+        targetId?.let { id -> AlertDialog(onDismissRequest = { targetId = null }, title = { Text(tr(AppStrings.load_template_draft_34828e)) },
+            text = { Text(tr(AppStrings.replaces_the_current_editing_draft_including_unsaved_ch_0aa7a3)) },
             confirmButton = { TextButton(onClick = {
                 scope.launch {
                 val editor = workspace.editor(id)
                 editor?.state?.first { !it.loading }
-                if (editor == null || !editor.state.value.editable || definition == null || template == null) { localError = "编辑器尚未就绪或有待恢复草稿，请先打开该设备编辑页处理。" }
+                if (editor == null || !editor.state.value.editable || definition == null || template == null) { localError = tr(AppStrings.the_editor_is_not_ready_or_has_a_draft_to_recover_open_354c39) }
                 else { editor.importDefinition(definition, template.json); go(Route(Screen.PANEL_EDITOR, id)) }
                 }
                 targetId = null
-            }) { Text("载入并检查") } }, dismissButton = { TextButton(onClick = { targetId = null }) { Text("取消") } }) }
-        if (deleting && template != null) AlertDialog(onDismissRequest = { deleting = false }, title = { Text("删除模板？") }, text = { Text("不会修改已经应用此模板的设备。") },
-            confirmButton = { TextButton(onClick = { activity.deleteTemplate(template.id); deleting = false; go(Route(Screen.PRESETS)) }) { Text("删除") } },
-            dismissButton = { TextButton(onClick = { deleting = false }) { Text("取消") } })
-    } else Page("PANEL LIBRARY", "面板模板", "模板只保存协议与组件定义，不包含运行时输入或连接凭据。") {
-        archive.templates.forEach { t -> Item(t.title, "查看、导出或应用到兼容设备") { go(Route(Screen.PRESET, t.id)) } }
-        if (archive.templates.isEmpty()) Text("还没有模板，可以从已有设备保存或导入配置文件。", color = Muted)
-        Section("从设备保存模板")
-        devices.forEach { d -> TextButton(onClick = { source = PanelJson.encode(d.panel); title = d.name; localError = null }) { Text("选用 ${d.name} 的已保存面板") } }
-        Section("导入与保存")
-        OutlinedButton(onClick = files.importFile, enabled = !files.busy) { Text("导入 .thingstalk.json") }
-        OutlinedTextField(title, { title = it }, label = { Text("模板名称") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-        OutlinedTextField(source, { source = it }, label = { Text("完整面板 JSON") }, modifier = Modifier.fillMaxWidth(), minLines = 4, maxLines = 10)
-        Primary("校验并保存模板", !files.busy && source.isNotBlank() && title.isNotBlank()) {
+            }) { Text(tr(AppStrings.load_and_review_aa4cad)) } }, dismissButton = { TextButton(onClick = { targetId = null }) { Text(tr(AppStrings.cancel_4d0b46)) } }) }
+        if (deleting && template != null) AlertDialog(onDismissRequest = { deleting = false }, title = { Text(tr(AppStrings.delete_template_e35295)) }, text = { Text(tr(AppStrings.devices_already_using_this_template_are_not_affected_7b1c3c)) },
+            confirmButton = { TextButton(onClick = { activity.deleteTemplate(template.id); deleting = false; go(Route(Screen.PRESETS)) }) { Text(tr(AppStrings.delete_3755f5)) } },
+            dismissButton = { TextButton(onClick = { deleting = false }) { Text(tr(AppStrings.cancel_4d0b46)) } })
+    } else Page("PANEL LIBRARY", tr(AppStrings.panel_templates_4fb3e5), tr(AppStrings.templates_contain_protocols_and_widget_definitions_only_de2cbc)) {
+        archive.templates.forEach { t -> Item(t.title, tr(AppStrings.view_export_or_apply_to_a_compatible_device_68d50f)) { go(Route(Screen.PRESET, t.id)) } }
+        if (archive.templates.isEmpty()) Text(tr(AppStrings.no_templates_yet_save_one_from_a_device_or_import_a_con_b0b358), color = Muted)
+        Section(tr(AppStrings.save_template_from_device_ec49a7))
+        devices.forEach { d -> TextButton(onClick = { source = PanelJson.encode(d.panel); title = d.name; localError = null }) { Text(tr(AppStrings.use_the_saved_panel_of_c76859, d.name)) } }
+        Section(tr(AppStrings.import_and_save_0293c4))
+        OutlinedButton(onClick = files.importFile, enabled = !files.busy) { Text(tr(AppStrings.import_thingstalk_json_ed1b67)) }
+        OutlinedTextField(title, { title = it }, label = { Text(tr(AppStrings.template_name_bbc511)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        OutlinedTextField(source, { source = it }, label = { Text(tr(AppStrings.complete_panel_json_bc7c46)) }, modifier = Modifier.fillMaxWidth(), minLines = 4, maxLines = 10)
+        Primary(tr(AppStrings.validate_and_save_template_8c4209), !files.busy && source.isNotBlank() && title.isNotBlank()) {
             try {
                 val panel = PanelJson.decode(source)
                 require(platformCapabilities().ble || panel.transport == PanelTransport.MQTT)
                 activity.saveTemplate(title.trim(), source)
                 localError = null; source = ""; title = ""
-            } catch (failure: Exception) { localError = "无法保存：请检查格式、平台类型、名称与模板数量。" }
+            } catch (failure: Exception) { localError = tr(AppStrings.could_not_save_check_the_format_platform_name_and_templ_056469) }
         }
-        localError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Text("最多 20 个模板；单项 50,000 字符。较大配置仍可直接从设备编辑页导入。", color = Muted)
+        localError?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
+        error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
+        Text(tr(AppStrings.up_to_20_templates_each_up_to_50_000_characters_larger_73d253), color = Muted)
     }
 }

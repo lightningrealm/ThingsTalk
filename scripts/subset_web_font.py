@@ -25,6 +25,8 @@ for lead in range(0xA1, 0xF8):
             pass
 for source in (root / "shared/src").rglob("*.kt"):
     characters.update(source.read_text())
+for source in (root / "shared/src/commonMain/localization").glob("*.xml"):
+    characters.update(source.read_text())
 
 options = subset.Options()
 options.name_IDs = ["*"]

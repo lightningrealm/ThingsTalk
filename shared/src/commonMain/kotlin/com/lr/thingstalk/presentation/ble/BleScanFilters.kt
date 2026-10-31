@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.ble
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -28,26 +29,26 @@ internal fun BleScanFilters(filter: BleScanFilter, onChange: (BleScanFilter) -> 
     var expanded by rememberSaveable { mutableStateOf(filter.namedOnly || filter.minimumRssi != null || filter.serviceUuid.isNotBlank()) }
     val focus = LocalFocusManager.current
     val advancedSummary = buildList {
-        if (filter.namedOnly) add("仅有名称")
+        if (filter.namedOnly) add(tr(AppStrings.named_only_f55924))
         filter.minimumRssi?.let { add("≥ $it dBm") }
-        filter.serviceUuid.trim().takeIf { it.isNotEmpty() }?.let { add("服务 $it") }
+        filter.serviceUuid.trim().takeIf { it.isNotEmpty() }?.let { add(tr(AppStrings.service_f6a6f7, it)) }
     }.joinToString(" · ")
     Panel {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("筛选设备", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-            TextButton(onClick = { focus.clearFocus(); onClear() }, enabled = filter.isActive) { Text("清除筛选") }
+            Text(tr(AppStrings.filter_devices_adfc92), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = { focus.clearFocus(); onClear() }, enabled = filter.isActive) { Text(tr(AppStrings.clear_filters_4bbc4e)) }
         }
         OutlinedTextField(
             value = filter.query,
             onValueChange = { onChange(filter.copy(query = it)) },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("设备名称或 ID") },
-            placeholder = { Text("输入关键词") },
+            label = { Text(tr(AppStrings.device_name_or_id_e0ee72)) },
+            placeholder = { Text(tr(AppStrings.enter_a_keyword_532b4f)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
         )
-        TextButton(onClick = { focus.clearFocus(); expanded = !expanded }) { Text(if (expanded) "收起筛选" else "更多筛选") }
+        TextButton(onClick = { focus.clearFocus(); expanded = !expanded }) { Text(if (expanded) tr(AppStrings.fewer_filters_71b0cb) else tr(AppStrings.more_filters_194b82)) }
         if (!expanded && advancedSummary.isNotEmpty()) {
             Text(advancedSummary, color = if (filter.serviceUuidError != null) MaterialTheme.colorScheme.error else Muted,
                 style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -58,33 +59,33 @@ internal fun BleScanFilters(filter: BleScanFilter, onChange: (BleScanFilter) -> 
             exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Toggle("仅显示有名称的设备", "隐藏未广播名称的外设", filter.namedOnly) { onChange(filter.copy(namedOnly = it)) }
+                Toggle(tr(AppStrings.only_show_named_devices_0b8045), tr(AppStrings.hide_peripherals_without_an_advertised_name_96f405), filter.namedOnly) { onChange(filter.copy(namedOnly = it)) }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("最低信号强度", style = MaterialTheme.typography.labelLarge)
+                    Text(tr(AppStrings.minimum_signal_strength_ae8192), style = MaterialTheme.typography.labelLarge)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(null, -90, -75, -60).forEach { threshold ->
                             FilterChip(
                                 selected = filter.minimumRssi == threshold,
                                 onClick = { onChange(filter.copy(minimumRssi = threshold)) },
-                                label = { Text(threshold?.let { "≥ $it dBm" } ?: "不限") },
+                                label = { Text(threshold?.let { "≥ $it dBm" } ?: tr(AppStrings.any_09c4fc)) },
                             )
                         }
                     }
-                    Text("数值越接近 0，信号越强；信号强度不等于距离。", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Text(tr(AppStrings.values_closer_to_0_indicate_stronger_signals_not_necess_91131f), color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
                 OutlinedTextField(
                     value = filter.serviceUuid,
                     onValueChange = { onChange(filter.copy(serviceUuid = it)) },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("广播服务 UUID 片段") },
-                    placeholder = { Text("例如 FFF、180D 或完整 UUID") },
+                    label = { Text(tr(AppStrings.advertised_service_uuid_fragment_b09ea3)) },
+                    placeholder = { Text(tr(AppStrings.for_example_fff_180d_or_a_full_uuid_249209)) },
                     singleLine = true,
                     isError = filter.serviceUuidError != null,
-                    supportingText = { Text(filter.serviceUuidError ?: "局部匹配，忽略大小写和连字符；仅匹配广播中的服务。") },
+                    supportingText = { Text(filter.serviceUuidError?.let(::diagnosticText) ?: tr(AppStrings.partial_match_ignoring_case_and_hyphens_matches_adverti_2a7a55)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
                 )
-                Text("所有条件同时生效，修改后立即更新结果。", color = Muted, style = MaterialTheme.typography.bodySmall)
+                Text(tr(AppStrings.all_filters_apply_together_results_update_immediately_50db32), color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

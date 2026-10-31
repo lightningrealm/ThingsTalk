@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleLocalizations</key>
+	<array><string>en</string><string>zh-Hans</string></array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>ThinsTalk 需要使用蓝牙来发现、连接附近设备，并读取状态和发送控制指令。</string>
+	<string>ThingsTalk uses Bluetooth to discover and connect nearby devices, read their status and send control commands.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

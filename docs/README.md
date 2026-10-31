@@ -5,7 +5,8 @@
 - [设备创建与配置导入](guides/devices.md)
 - [MQTT 连接配置](guides/mqtt-connections.md)
 - [消息、模板与本地工作台](guides/workspace.md)
-- [外观设置](guides/appearance.md)
+- [语言与外观设置](guides/appearance.md)
+- [三端中英文文案](architecture/localization.md)
 - [架构与会话生命周期](architecture/sessions.md)
 - [图标源文件与平台资源](design/app-icon.md)
 

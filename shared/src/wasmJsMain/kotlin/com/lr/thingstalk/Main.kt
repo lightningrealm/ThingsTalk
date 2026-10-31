@@ -1,5 +1,8 @@
 package com.lr.thingstalk
 
+import com.lr.thingstalk.presentation.i18n.*
+import com.lr.thingstalk.data.appearance.*
+import com.lr.thingstalk.domain.appearance.resolve
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +57,8 @@ private fun WebWindowResources() {
 
 @Composable
 private fun WithChineseFont(content: @Composable () -> Unit) {
+    val preference = remember { StoredAppearanceRepository(createAppearanceStorage()).appearance.value.language }
+    val language = preference.resolve(systemLanguageTag())
     val resolver = LocalFontFamilyResolver.current
     var loaded by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -77,8 +82,8 @@ private fun WithChineseFont(content: @Composable () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(if (failed) "The local font could not be loaded." else "Loading ThingsTalk…")
-            if (failed) Button(onClick = { attempt++ }) { Text("Retry") }
+            Text((if (failed) AppStrings.web_font_failed else AppStrings.web_loading).resolve(language))
+            if (failed) Button(onClick = { attempt++ }) { Text(AppStrings.retry.resolve(language)) }
         }
     }
 }

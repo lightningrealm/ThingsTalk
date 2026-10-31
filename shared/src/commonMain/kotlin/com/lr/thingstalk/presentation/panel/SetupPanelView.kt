@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.panel
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +21,7 @@ internal fun SetupPanelView(definition: SetupPanel, session: SetupPanelSession?)
         if (!expanded) return@Panel
         Text(definition.instructions, color = Muted)
         if (session == null) {
-            Text("请连接 BLE；设备需提供此面板配置的服务和特征。", color = Muted)
+            Text(tr(AppStrings.connect_ble_the_device_must_expose_the_services_and_cha_28ccf4), color = Muted)
             return@Panel
         }
         key(session, definition) { SetupForm(definition, session) }
@@ -49,49 +50,49 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
         if (status.unlocked) { inputs = definition.initialInputs(session.readValues(), unsavedSections); loaded = true }
     }
     Text(when {
-        busy && !loaded -> "正在验证设备访问权限。如已完成配对，请稍候，客户端会重新读取验证（最多 60 秒）。"
-        busy -> "正在与设备通信…"
-        unlocked == false -> "设备设置窗口未开启，请按设备说明开启后重试读取。"
-        !loaded -> "请先准备设备设置。将读取配置特征；如系统要求配对，请先完成配对。"
-        else -> "设备配置读取成功，可以编辑"
+        busy && !loaded -> tr(AppStrings.verifying_device_access_after_pairing_wait_while_the_cl_b61510)
+        busy -> tr(AppStrings.communicating_with_device_f7d4de)
+        unlocked == false -> tr(AppStrings.the_device_settings_window_is_closed_open_it_as_instruc_ee1beb)
+        !loaded -> tr(AppStrings.prepare_device_settings_first_reading_configuration_may_9e2e09)
+        else -> tr(AppStrings.configuration_read_successfully_ready_to_edit_1dfbbb)
     }, color = Muted)
     TextButton(enabled = !busy, onClick = {
         preparationJob = scope.launch {
             busy = true; loaded = false; unlocked = null; message = null
             try { reload() }
-            catch (timeout: TimeoutCancellationException) { message = "设备设置准备超时，请完成系统配对、确认设置窗口后重试。" }
+            catch (timeout: TimeoutCancellationException) { message = tr(AppStrings.preparation_timed_out_complete_system_pairing_check_the_ffde10) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (failure: SetupPanelFailure) { message = failure.message }
-            catch (failure: IllegalArgumentException) { message = failure.message ?: "设备设置配置无效" }
-            catch (_: Exception) { message = "读取失败，请检查连接和设备状态。" }
+            catch (failure: IllegalArgumentException) { message = failure.message ?: tr(AppStrings.invalid_device_settings_configuration_b70448) }
+            catch (_: Exception) { message = tr(AppStrings.read_failed_check_the_connection_and_device_state_bb1d9a) }
             finally { busy = false }
         }
-    }) { Text(if (loaded) "重新准备并读取配置（不读取密码）" else "准备设备设置（可能需要配对）") }
+    }) { Text(if (loaded) tr(AppStrings.prepare_again_and_read_configuration_excluding_password_8f42e1) else tr(AppStrings.prepare_device_settings_pairing_may_be_required_5f3ef0)) }
     if (busy && !loaded) TextButton(onClick = {
         preparationJob?.cancel()
-        message = "已取消准备，尚未发送配置命令。"
-    }) { Text("取消准备") }
+        message = tr(AppStrings.preparation_cancelled_no_configuration_command_was_sent_e1fe2f)
+    }) { Text(tr(AppStrings.cancel_preparation_cc6016)) }
     Row { definition.sections.forEach { section ->
         TextButton(enabled = !busy, onClick = { selected = section.id }) { Text((if (selected == section.id) "● " else "") + section.title) }
     } }
     val section = definition.sections.single { it.id == selected }
-    if (loaded && section.id in unsavedSections) Text("设备尚未保存${section.title}配置，可以直接填写。", color = Muted)
+    if (loaded && section.id in unsavedSections) Text(tr(AppStrings.no_configuration_saved_on_the_device_yet_you_can_fill_i_f9f030, section.title), color = Muted)
     section.fields.forEach { field ->
         OutlinedTextField(inputs[field.id].orEmpty(), { inputs = inputs + (field.id to it) },
             label = { Text(field.label) }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !busy && loaded,
             visualTransformation = if (field.secret) PasswordVisualTransformation() else VisualTransformation.None)
         field.defaultValue?.let { expected ->
-            Text("面板建议${field.label}：$expected；请与 MQTT topic 中的设备标识保持一致。", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Text(tr(AppStrings.panel_suggestion_for_keep_it_consistent_with_the_device_f7aabf, field.label, expected), color = Muted, style = MaterialTheme.typography.bodySmall)
             if (loaded && inputs[field.id] != expected) {
-                Text("当前值与面板建议值不同，可能导致设备与 App 使用不同主题。", color = MaterialTheme.colorScheme.error)
-                TextButton(enabled = !busy, onClick = { inputs = inputs + (field.id to expected) }) { Text("使用面板建议值") }
+                Text(tr(AppStrings.this_value_differs_from_the_panel_suggestion_the_device_66eeb1), color = MaterialTheme.colorScheme.error)
+                TextButton(enabled = !busy, onClick = { inputs = inputs + (field.id to expected) }) { Text(tr(AppStrings.use_suggested_value_ee3d62)) }
             }
         }
         if (field.secret) {
-            Text("留空保留设备原值；只有明确勾选清除才提交空值。", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Text(tr(AppStrings.leave_blank_to_keep_the_device_value_an_empty_value_is_38a02c), color = Muted, style = MaterialTheme.typography.bodySmall)
             Row {
                 Checkbox(field.id in clearSecrets, { clearSecrets = if (it) clearSecrets + field.id else clearSecrets - field.id }, enabled = !busy && loaded)
-                Text("清除${field.label}")
+                Text(tr(AppStrings.clear_45d73a, field.label))
             }
         }
     }
@@ -107,18 +108,18 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
             try {
                 val result = session.submit(section.id, values)
                 savedPasswords = buildSet { if (result.wifiPasswordSaved) add(2); if (result.mqttPasswordSaved) add(5) }
-                unsavedSections = unsavedSections - section.id; message = "设备已确认保存；不代表网络已连接。" }
-            catch (timeout: TimeoutCancellationException) { message = "保存结果未知，请读回核实；不会自动重发。" }
+                unsavedSections = unsavedSections - section.id; message = tr(AppStrings.device_confirmed_saving_this_does_not_confirm_network_c_4349b6) }
+            catch (timeout: TimeoutCancellationException) { message = tr(AppStrings.save_result_unknown_read_back_to_verify_no_automatic_re_a1c190) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (failure: SetupPanelFailure) {
                 message = buildString {
                     append(failure.message)
-                    failure.opcode?.let { append("\n操作=0x${it.toString(16)} 请求=${failure.request}") }
-                    failure.reply?.let { append("\n回执：请求=${it.request} 操作=0x${it.opcode.toString(16)} 结果=${it.result} 字段=${it.field} 偏移=${it.offset}") }
+                    failure.opcode?.let { append(tr(AppStrings.noperation_0x_request_5c2e10, it.toString(16), failure.request)) }
+                    failure.reply?.let { append(tr(AppStrings.nreceipt_request_operation_0x_result_field_offset_c338bc, it.request, it.opcode.toString(16), it.result, it.field, it.offset)) }
                 }
             }
-            catch (failure: IllegalArgumentException) { message = failure.message ?: "字段无效" }
-            catch (_: Exception) { message = "设备未确认保存，请检查连接、设置窗口和字段。不会自动补发。" }
+            catch (failure: IllegalArgumentException) { message = failure.message ?: tr(AppStrings.invalid_field_72c644) }
+            catch (_: Exception) { message = tr(AppStrings.device_did_not_confirm_saving_check_the_connection_sett_5e679e) }
             finally {
                 val secrets = definition.sections.flatMap { it.fields }.filter { it.secret }.map { it.id }.toSet()
                 inputs = inputs - secrets; clearSecrets = emptySet(); busy = false
@@ -126,18 +127,18 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
         }
     }
     val passwordNotice = section.passwordConfirmation(inputs, clearSecrets, savedPasswords)
-    Primary(if (busy) "正在通信…" else "保存${section.title}到设备", !busy && loaded && unlocked == true) {
+    Primary(if (busy) tr(AppStrings.communicating_8c8c3f) else tr(AppStrings.save_to_device_6f952b, section.title), !busy && loaded && unlocked == true) {
         if (passwordNotice != null) confirmSave = true else submitSection()
     }
     if (confirmSave) AlertDialog(
         onDismissRequest = { confirmSave = false },
-        title = { Text("确认密码处理") },
-        text = { Text(passwordNotice.orEmpty() + "\n确认后才会发送配置。") },
+        title = { Text(tr(AppStrings.confirm_password_handling_2d43bc)) },
+        text = { Text(passwordNotice.orEmpty().lines().joinToString("\n") { diagnosticText(it) } + tr(AppStrings.nconfiguration_will_be_sent_only_after_confirmation_53629e)) },
         confirmButton = { TextButton(enabled = !busy && loaded && unlocked == true, onClick = {
             confirmSave = false
             submitSection()
-        }) { Text("继续保存") } },
-        dismissButton = { TextButton(onClick = { confirmSave = false }) { Text("返回填写") } },
+        }) { Text(tr(AppStrings.continue_saving_2b9228)) } },
+        dismissButton = { TextButton(onClick = { confirmSave = false }) { Text(tr(AppStrings.return_to_form_0566fa)) } },
     )
-    message?.let { Text(it, color = Muted) }
+    message?.let { Text(diagnosticText(it), color = Muted) }
 }

@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.navigation
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -69,7 +70,7 @@ internal fun AdaptiveAppFrame(
                                 Modifier.widthIn(max = contentMaxWidth).fillMaxWidth().heightIn(min = if (compactHeight) 48.dp else 56.dp).padding(horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                if (back != null) TextButton(onClick = back) { Text("‹ 返回") }
+                                if (back != null) TextButton(onClick = back) { Text(tr(AppStrings.back_9c73b7)) }
                                 else Text("ThinsTalk", Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.weight(1f))
                                 Tag(badge)
@@ -99,7 +100,9 @@ internal fun AdaptiveAppFrame(
                         }
                         if (snackbar != null) SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter)
                             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                            .padding(bottom = if (showBottomNavigation && !usesRail) 80.dp else 0.dp))
+                            .padding(bottom = if (showBottomNavigation && !usesRail) 80.dp else 0.dp)) { data ->
+                            Snackbar { Text(diagnosticText(data.visuals.message)) }
+                        }
                     }
                 }
             }

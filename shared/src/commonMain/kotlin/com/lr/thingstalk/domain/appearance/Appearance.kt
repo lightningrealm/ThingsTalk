@@ -5,7 +5,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable enum class ThemeMode { SYSTEM, LIGHT, DARK }
 @Serializable enum class ThemePalette { SAGE, BLUE, VIOLET, CLAY, GRAPHITE }
-@Serializable data class Appearance(val mode: ThemeMode = ThemeMode.SYSTEM, val palette: ThemePalette = ThemePalette.SAGE)
+@Serializable data class Appearance(
+    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val palette: ThemePalette = ThemePalette.SAGE,
+    val language: LanguagePreference = LanguagePreference.SYSTEM,
+)
 fun Appearance.isDark(systemDark: Boolean): Boolean = when (mode) {
     ThemeMode.SYSTEM -> systemDark
     ThemeMode.LIGHT -> false

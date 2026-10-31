@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.panel
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,11 +21,11 @@ internal fun PayloadFormatsEditor(
     // List positions can be reused after structural edits; IDs themselves remain editable.
     var formatRevision by remember { mutableIntStateOf(0) }
     Panel {
-        Text("先定义报文，再为组件选择字段。一个报文可以同时提供温度、湿度等多个值。", color = Muted)
-        Text("二进制字段按顺序紧密排列；JSON 使用平铺的数值或布尔字段。配置不会自动修改设备固件。", color = Muted, style = MaterialTheme.typography.bodySmall)
+        Text(tr(AppStrings.define_payloads_then_select_fields_for_widgets_one_payl_428280), color = Muted)
+        Text(tr(AppStrings.binary_fields_are_packed_in_order_json_uses_flat_numeri_b3bb15), color = Muted, style = MaterialTheme.typography.bodySmall)
         formats.forEachIndexed { index, format ->
             TextButton(onClick = { selectedIndex = index }, modifier = Modifier.fillMaxWidth()) {
-                Text("${if (index == selectedIndex) "● " else ""}${format.label.ifBlank { "未命名格式" }} · ${format.id} · ${format.fields.size} 字段")
+                Text(tr(AppStrings.fields_2686e3, if (index == selectedIndex) "● " else "", format.label.ifBlank { tr(AppStrings.unnamed_format_1fe1ee) }, format.id, format.fields.size))
             }
         }
         OutlinedButton(onClick = {
@@ -32,9 +33,9 @@ internal fun PayloadFormatsEditor(
             while (formats.any { it.id == "format-$suffix" }) suffix++
             selectedIndex = formats.size
             formatRevision++
-            onChange(formats + PayloadFormat(id = "format-$suffix", label = "数据格式 $suffix", fields = listOf(PayloadField(id = "value"))))
-        }, enabled = formats.size < 32, modifier = Modifier.fillMaxWidth()) { Text("新增数据格式") }
-        if (formats.isEmpty()) Text("也可继续使用组件内的单值编码。需要共享报文结构时再添加格式。", color = Muted, style = MaterialTheme.typography.bodySmall)
+            onChange(formats + PayloadFormat(id = "format-$suffix", label = tr(AppStrings.payload_format_bc8670, suffix), fields = listOf(PayloadField(id = "value"))))
+        }, enabled = formats.size < 32, modifier = Modifier.fillMaxWidth()) { Text(tr(AppStrings.add_payload_format_81953b)) }
+        if (formats.isEmpty()) Text(tr(AppStrings.widgets_can_still_use_single_value_encoding_add_a_forma_8b22e9), color = Muted, style = MaterialTheme.typography.bodySmall)
     }
     formats.getOrNull(selectedIndex)?.let { format ->
         key(selectedIndex, formatRevision) {
@@ -64,27 +65,27 @@ private fun PayloadFormatDetail(
         .filter { it.formatId == format.id }
     val inUse = references.isNotEmpty()
     Panel {
-        OutlinedTextField(format.label, { onChange(format.copy(label = it)) }, label = { Text("格式名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(format.id, { onChange(format.copy(id = it)) }, label = { Text("格式 ID") },
+        OutlinedTextField(format.label, { onChange(format.copy(label = it)) }, label = { Text(tr(AppStrings.format_name_30b666)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(format.id, { onChange(format.copy(id = it)) }, label = { Text(tr(AppStrings.format_id_ee5bf1)) },
             enabled = !inUse, isError = !payloadIdentifier.matches(format.id), singleLine = true,
-            supportingText = { Text(if (inUse) "此 ID 已被组件引用。先解除相关绑定，才能更改 ID 或删除格式。" else "字母开头，可含字母、数字、点、下划线和连字符。") },
+            supportingText = { Text(if (inUse) tr(AppStrings.this_id_is_referenced_by_widgets_remove_the_references_44b5a2) else tr(AppStrings.start_with_a_letter_letters_digits_dots_underscores_and_4d04e9)) },
             modifier = Modifier.fillMaxWidth())
-        Choices(listOf("二进制", "JSON 对象"), if (format.encoding == PayloadEncoding.BINARY) "二进制" else "JSON 对象") { selected ->
-            if (selected == "二进制") onChange(format.copy(encoding = PayloadEncoding.BINARY))
+        Choices(listOf("choice:binary_78ff74", "choice:json_object_6b8049"), if (format.encoding == PayloadEncoding.BINARY) "choice:binary_78ff74" else "choice:json_object_6b8049") { selected ->
+            if (selected == "choice:binary_78ff74") onChange(format.copy(encoding = PayloadEncoding.BINARY))
             else if (format.encoding != PayloadEncoding.JSON) {
                 if (format.prefixHex.isNotEmpty() || format.suffixHex.isNotEmpty() || format.fields.any { !it.hasDefaultBinaryParameters() }) confirmJson = true
                 else onChange(format.copy(encoding = PayloadEncoding.JSON))
             }
         }
         if (format.encoding == PayloadEncoding.BINARY) {
-            Text("报文 = 帧头 + 按列表顺序编码的字段 + 帧尾。读取和通知会校验帧头、帧尾与完整长度。", color = Muted, style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(format.prefixHex, { onChange(format.copy(prefixHex = it)) }, label = { Text("帧头 HEX（可留空）") },
+            Text(tr(AppStrings.payload_header_fields_in_list_order_trailer_reads_and_n_05e49b), color = Muted, style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(format.prefixHex, { onChange(format.copy(prefixHex = it)) }, label = { Text(tr(AppStrings.header_hex_optional_99f396)) },
                 isError = !validBindingHex(format.prefixHex, 0, 512), singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(format.suffixHex, { onChange(format.copy(suffixHex = it)) }, label = { Text("帧尾 HEX（可留空）") },
+            OutlinedTextField(format.suffixHex, { onChange(format.copy(suffixHex = it)) }, label = { Text(tr(AppStrings.trailer_hex_optional_d81860)) },
                 isError = !validBindingHex(format.suffixHex, 0, 512), singleLine = true, modifier = Modifier.fillMaxWidth())
-        } else Text("字段 ID 对应 JSON 的键。数值直接使用面板显示值，布尔使用 true / false；数值类型仍限制可表示范围。", color = Muted, style = MaterialTheme.typography.bodySmall)
+        } else Text(tr(AppStrings.field_ids_become_json_keys_numbers_use_displayed_values_9d525b), color = Muted, style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        Text("报文字段", style = MaterialTheme.typography.titleMedium)
+        Text(tr(AppStrings.payload_fields_bff253), style = MaterialTheme.typography.titleMedium)
         format.fields.forEachIndexed { index, field ->
             Row(Modifier.fillMaxWidth()) {
                 TextButton(onClick = { selectedField = index }, modifier = Modifier.weight(1f)) {
@@ -94,22 +95,22 @@ private fun PayloadFormatDetail(
                     onChange(format.copy(fields = format.fields.toMutableList().apply { add(index - 1, removeAt(index)) }))
                     selectedField = index - 1
                     fieldRevision++
-                }, enabled = index > 0) { Text("上移") }
+                }, enabled = index > 0) { Text(tr(AppStrings.move_up_8a0c83)) }
                 TextButton(onClick = {
                     onChange(format.copy(fields = format.fields.toMutableList().apply { add(index + 1, removeAt(index)) }))
                     selectedField = index + 1
                     fieldRevision++
-                }, enabled = index < format.fields.lastIndex) { Text("下移") }
+                }, enabled = index < format.fields.lastIndex) { Text(tr(AppStrings.move_down_05c46f)) }
             }
         }
-        if (format.encoding == PayloadEncoding.BINARY) Text("调整字段顺序会改变报文中的字节位置，请与设备协议保持一致。", color = Muted, style = MaterialTheme.typography.bodySmall)
+        if (format.encoding == PayloadEncoding.BINARY) Text(tr(AppStrings.changing_field_order_changes_byte_positions_keep_it_con_9e0f66), color = Muted, style = MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick = {
             var suffix = 1
             while (format.fields.any { it.id == "field-$suffix" }) suffix++
             selectedField = format.fields.size
             fieldRevision++
             onChange(format.copy(fields = format.fields + PayloadField(id = "field-$suffix")))
-        }, enabled = format.fields.size < 32) { Text("新增字段") }
+        }, enabled = format.fields.size < 32) { Text(tr(AppStrings.add_field_1687c8)) }
         format.fields.getOrNull(selectedField)?.let { field ->
             val fieldUsed = references.any { it.fieldId == field.id }
             key(selectedField, fieldRevision, format.encoding) {
@@ -123,18 +124,18 @@ private fun PayloadFormatDetail(
                 )
             }
         }
-        TextButton(onClick = onRemove, enabled = !inUse) { Text("删除此格式") }
-        if (inUse) Text("此格式用于 ${references.size} 项操作，删除前请解除引用。", color = Muted, style = MaterialTheme.typography.bodySmall)
+        TextButton(onClick = onRemove, enabled = !inUse) { Text(tr(AppStrings.delete_format_3a9450)) }
+        if (inUse) Text(tr(AppStrings.this_format_is_used_by_operations_remove_their_referenc_87dc9e, references.size), color = Muted, style = MaterialTheme.typography.bodySmall)
     }
-    if (confirmJson) AlertDialog(onDismissRequest = { confirmJson = false }, title = { Text("改为 JSON 格式？") },
-        text = { Text("JSON 使用字段名和直接数值。切换会清空帧头、帧尾，重置字节序、倍率、偏置和真假字节编码；字段、类型和默认值保留。") },
+    if (confirmJson) AlertDialog(onDismissRequest = { confirmJson = false }, title = { Text(tr(AppStrings.switch_to_json_df2b2c)) },
+        text = { Text(tr(AppStrings.json_uses_field_names_and_direct_values_switching_clear_d21fe8)) },
         confirmButton = { TextButton(onClick = {
             onChange(format.copy(encoding = PayloadEncoding.JSON, prefixHex = "", suffixHex = "", fields = format.fields.map {
                 it.copy(byteOrder = PanelByteOrder.LITTLE_ENDIAN, scale = 1.0, bias = 0.0, falseHex = "00", trueHex = "01")
             }))
             confirmJson = false
-        }) { Text("切换格式") } },
-        dismissButton = { TextButton(onClick = { confirmJson = false }) { Text("取消") } },
+        }) { Text(tr(AppStrings.switch_format_96d553)) } },
+        dismissButton = { TextButton(onClick = { confirmJson = false }) { Text(tr(AppStrings.cancel_4d0b46)) } },
     )
 }
 
@@ -147,11 +148,11 @@ private fun PayloadFieldEditor(
     onRemove: () -> Unit,
 ) {
     HorizontalDivider()
-    OutlinedTextField(field.id, { onChange(field.copy(id = it)) }, label = { Text("字段 ID") },
+    OutlinedTextField(field.id, { onChange(field.copy(id = it)) }, label = { Text(tr(AppStrings.field_id_204aa4)) },
         enabled = !inUse, isError = !payloadIdentifier.matches(field.id), singleLine = true,
-        supportingText = { Text(if (inUse) "此字段已绑定组件；解除引用后可以更名或删除。" else "JSON 格式使用此 ID 作为键。") }, modifier = Modifier.fillMaxWidth())
+        supportingText = { Text(if (inUse) tr(AppStrings.this_field_is_bound_to_a_widget_remove_references_befor_b7da21) else tr(AppStrings.json_uses_this_id_as_the_key_a9460a)) }, modifier = Modifier.fillMaxWidth())
     val types = numericPanelCodecs.toList() + CodecType.BOOLEAN
-    PanelPicker("字段数据类型", types.map { it.name to it.payloadTypeLabel() }, field.codec.name) { value ->
+    PanelPicker(tr(AppStrings.field_data_type_632ef0), types.map { it.name to it.payloadTypeLabel() }, field.codec.name) { value ->
         val selected = CodecType.valueOf(value)
         onChange(field.copy(codec = selected,
             byteOrder = if (selected in setOf(CodecType.BOOLEAN, CodecType.UINT8, CodecType.INT8)) PanelByteOrder.LITTLE_ENDIAN else field.byteOrder,
@@ -162,8 +163,8 @@ private fun PayloadFieldEditor(
     }
     if (encoding == PayloadEncoding.BINARY) {
         if (field.codec in setOf(CodecType.UINT16, CodecType.INT16, CodecType.UINT32, CodecType.INT32, CodecType.FLOAT32)) {
-            Choices(listOf("小端", "大端"), if (field.byteOrder == PanelByteOrder.LITTLE_ENDIAN) "小端" else "大端") {
-                onChange(field.copy(byteOrder = if (it == "小端") PanelByteOrder.LITTLE_ENDIAN else PanelByteOrder.BIG_ENDIAN))
+            Choices(listOf("choice:little_endian_796b46", "choice:big_endian_57167f"), if (field.byteOrder == PanelByteOrder.LITTLE_ENDIAN) "choice:little_endian_796b46" else "choice:big_endian_57167f") {
+                onChange(field.copy(byteOrder = if (it == "choice:little_endian_796b46") PanelByteOrder.LITTLE_ENDIAN else PanelByteOrder.BIG_ENDIAN))
             }
         }
         if (field.codec == CodecType.BOOLEAN) {
@@ -171,31 +172,31 @@ private fun PayloadFieldEditor(
                 isError = !validBindingHex(field.falseHex, 1, 32), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(field.trueHex, { onChange(field.copy(trueHex = it)) }, label = { Text("True HEX") }, singleLine = true,
                 isError = !validBindingHex(field.trueHex, 1, 32), modifier = Modifier.fillMaxWidth())
-            Text("真假字节必须等长且不同。", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Text(tr(AppStrings.true_and_false_byte_sequences_must_have_equal_lengths_a_620492), color = Muted, style = MaterialTheme.typography.bodySmall)
         } else key(field.codec) {
             var scale by remember { mutableStateOf(field.scale.takeIf { it.isFinite() }?.toString().orEmpty()) }
             var bias by remember { mutableStateOf(field.bias.takeIf { it.isFinite() }?.toString().orEmpty()) }
-            Text("显示值 = 原始值 × 倍率 + 偏置；写入时自动逆向换算。", color = Muted, style = MaterialTheme.typography.bodySmall)
+            Text(tr(AppStrings.displayed_value_raw_value_scale_offset_writes_apply_the_8f9580), color = Muted, style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(scale, {
                 scale = it
                 onChange(field.copy(scale = it.toDoubleOrNull() ?: Double.NaN))
-            }, label = { Text("倍率") }, singleLine = true, isError = scale.toDoubleOrNull()?.let { it.isFinite() && it != 0.0 } != true, modifier = Modifier.fillMaxWidth())
+            }, label = { Text(tr(AppStrings.scale_8482e1)) }, singleLine = true, isError = scale.toDoubleOrNull()?.let { it.isFinite() && it != 0.0 } != true, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(bias, {
                 bias = it
                 onChange(field.copy(bias = it.toDoubleOrNull() ?: Double.NaN))
-            }, label = { Text("偏置") }, singleLine = true, isError = bias.toDoubleOrNull()?.isFinite() != true, modifier = Modifier.fillMaxWidth())
+            }, label = { Text(tr(AppStrings.offset_6f0fb1)) }, singleLine = true, isError = bias.toDoubleOrNull()?.isFinite() != true, modifier = Modifier.fillMaxWidth())
         }
     }
     OutlinedTextField(field.defaultValue.orEmpty(), { onChange(field.copy(defaultValue = it.takeIf(String::isNotBlank))) },
-        label = { Text("写入默认值（可选）") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-        supportingText = { Text(if (field.codec == CodecType.BOOLEAN) "填写 true 或 false。动作报文的所有字段、属性写入的其他字段都需要默认值。" else "填写换算后的数值。动作报文的所有字段、属性写入的其他字段都需要默认值。") })
-    TextButton(onClick = onRemove, enabled = !inUse) { Text("删除此字段") }
+        label = { Text(tr(AppStrings.default_write_value_optional_8eb284)) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+        supportingText = { Text(if (field.codec == CodecType.BOOLEAN) tr(AppStrings.enter_true_or_false_all_action_fields_and_other_fields_541fbc) else tr(AppStrings.enter_the_converted_value_all_action_fields_and_other_f_4bd7fe)) })
+    TextButton(onClick = onRemove, enabled = !inUse) { Text(tr(AppStrings.delete_field_b89c9c)) }
 }
 
 private val payloadIdentifier = Regex("[A-Za-z][A-Za-z0-9_.-]{0,63}")
 private fun PayloadField.hasDefaultBinaryParameters(): Boolean = byteOrder == PanelByteOrder.LITTLE_ENDIAN && scale == 1.0 && bias == 0.0 && falseHex == "00" && trueHex == "01"
 private fun CodecType.payloadTypeLabel(): String = when (this) {
-    CodecType.BOOLEAN -> "Boolean · 布尔"
-    CodecType.FLOAT32 -> "Float32 · 浮点数"
+    CodecType.BOOLEAN -> tr(AppStrings.boolean_911f33)
+    CodecType.FLOAT32 -> tr(AppStrings.float32_floating_point_297f86)
     else -> name
 }

@@ -1,5 +1,6 @@
 package com.lr.thingstalk.presentation.panel
 
+import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -77,10 +78,10 @@ internal fun PanelNumberSlider(label: String, capability: PanelCapability, value
     Slider(position, { position = it; edited = true }, enabled = enabled, valueRange = 0f..1f,
         modifier = Modifier.semantics { contentDescription = label },
         onValueChangeFinished = { onWrite(panelNumberText(panelSliderValue(capability, position))) })
-    Text("${panelNumberText(minimum)}–${panelNumberText(maximum)} · 步长 ${panelNumberText(capability.step)}", color = Muted, style = MaterialTheme.typography.labelSmall)
-    if (edited) Text("当前为设置值；设备回值：${value ?: "未知"}。", color = Muted, style = MaterialTheme.typography.bodySmall)
-    else if (value == null) Text("设备状态未知，拖动后提交设置值。", color = Muted, style = MaterialTheme.typography.bodySmall)
-    if (edited && actual != null) TextButton(onClick = { useDeviceValue() }) { Text("使用设备回值") }
+    Text(tr(AppStrings.step_a24ad2, panelNumberText(minimum), panelNumberText(maximum), panelNumberText(capability.step)), color = Muted, style = MaterialTheme.typography.labelSmall)
+    if (edited) Text(tr(AppStrings.showing_the_set_value_device_reports_21b2ef, value ?: tr(AppStrings.unknown_d9c32a)), color = Muted, style = MaterialTheme.typography.bodySmall)
+    else if (value == null) Text(tr(AppStrings.device_state_unknown_drag_to_set_a_value_7fbe2d), color = Muted, style = MaterialTheme.typography.bodySmall)
+    if (edited && actual != null) TextButton(onClick = { useDeviceValue() }) { Text(tr(AppStrings.use_device_value_1cb7a9)) }
 }
 
 @Composable
@@ -93,11 +94,11 @@ internal fun PanelNumberInput(label: String, capability: PanelCapability, value:
     val parsed = text.toDoubleOrNull()
     val valid = parsed != null && parsed.isFinite() && parsed in minimum..maximum && text == text.trim()
     Text(label, style = MaterialTheme.typography.titleMedium)
-    Text("设备回值：${value ?: "未知"} ${capability.unit}", color = Muted)
-    OutlinedTextField(text, { text = it; edited = true }, label = { Text("设置值") }, singleLine = true,
+    Text(tr(AppStrings.device_value_f40ad0, value ?: tr(AppStrings.unknown_d9c32a), capability.unit), color = Muted)
+    OutlinedTextField(text, { text = it; edited = true }, label = { Text(tr(AppStrings.set_value_8b3a1d)) }, singleLine = true,
         enabled = enabled, isError = text.isNotEmpty() && !valid, modifier = Modifier.fillMaxWidth(),
-        supportingText = { Text("允许范围 ${panelNumberText(minimum)}–${panelNumberText(maximum)} ${capability.unit}") })
-    Primary("写入设置值", enabled && valid) { onWrite(text) }
-    if (edited && value != null) TextButton(onClick = { text = value; edited = false }) { Text("使用设备回值") }
-    Text("提交后等待读取或通知确认。整数编码拒绝非整数原始值；FLOAT32 按 32 位浮点精度编码。", color = Muted, style = MaterialTheme.typography.bodySmall)
+        supportingText = { Text(tr(AppStrings.allowed_range_0db5ac, panelNumberText(minimum), panelNumberText(maximum), capability.unit)) })
+    Primary(tr(AppStrings.write_value_21c0db), enabled && valid) { onWrite(text) }
+    if (edited && value != null) TextButton(onClick = { text = value; edited = false }) { Text(tr(AppStrings.use_device_value_1cb7a9)) }
+    Text(tr(AppStrings.wait_for_a_read_or_notification_to_confirm_integer_enco_d70e14), color = Muted, style = MaterialTheme.typography.bodySmall)
 }
