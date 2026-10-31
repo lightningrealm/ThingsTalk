@@ -21,6 +21,8 @@ SOURCES = [BASE + p for p in (
     'presentation/panel/ConfigurableDevicePage.kt', 'presentation/panel/PanelNumberControls.kt',
     'presentation/panel/PanelFileTransfer.kt',
     'domain/panel/MqttPanelBinding.kt', 'domain/panel/DualPanelBinding.kt',
+    'domain/panel/PanelImport.kt', 'presentation/panel/PanelImport.kt',
+    'presentation/device/ImportDeviceAction.kt', 'presentation/activity/TemplatePages.kt',
     'data/panel/MqttPanelOperations.kt', 'data/panel/DualPanelOperations.kt',
     'domain/mqtt/MqttProfile.kt', 'data/mqtt/MqttProfileStorage.kt',
     'data/mqtt/MqttValidation.kt', 'data/mqtt/KtorMqttTransport.kt',

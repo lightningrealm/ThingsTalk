@@ -19,8 +19,8 @@ import org.w3c.dom.events.Event
 @Composable internal actual fun PlatformLanguage(language: AppLanguage) {
     SideEffect {
         document.documentElement?.setAttribute("lang", language.tag)
-        document.title = if (language == AppLanguage.CHINESE) "ThingsTalk · 设备工作台" else "ThingsTalk · Device workspace"
+        document.title = AppStrings.web_title.resolve(language)
         document.querySelector("meta[name='description']")?.setAttribute("content",
-            if (language == AppLanguage.CHINESE) "ThingsTalk MQTT 工作台" else "ThingsTalk MQTT workspace")
+            AppStrings.web_title.resolve(language))
     }
 }

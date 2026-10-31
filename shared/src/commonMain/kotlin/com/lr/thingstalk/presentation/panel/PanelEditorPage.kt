@@ -41,11 +41,12 @@ fun PanelEditorPage(viewModel: PanelViewModel, editor: PanelEditorViewModel, ins
             return
         }
         try {
-            val imported = viewModel.importDefinition(source)
-            editor.importDefinitionWhenReady(imported, source)
+            val prepared = preparePanelImport(source)
+            val imported = viewModel.importDefinition(prepared.source)
+            editor.importDefinitionWhenReady(imported, prepared.source)
             showFormats = imported.payloadFormats.isNotEmpty()
             messages = emptyList()
-            notice = if (imported.transport == PanelTransport.DUAL && imported.bindings.any { it.publish != null || it.subscribe != null } && imported.bindings.none { it.read != null || it.write != null || it.notify != null })
+            notice = prepared.notice() ?: if (imported.transport == PanelTransport.DUAL && imported.bindings.any { it.publish != null || it.subscribe != null } && imported.bindings.none { it.read != null || it.write != null || it.notify != null })
                 tr(AppStrings.dual_connection_draft_loaded_with_mqtt_bindings_only_ad_6e9d28)
             else tr(AppStrings.configuration_draft_loaded_check_bindings_and_payload_f_3b8d68)
         } catch (cancelled: CancellationException) { throw cancelled }

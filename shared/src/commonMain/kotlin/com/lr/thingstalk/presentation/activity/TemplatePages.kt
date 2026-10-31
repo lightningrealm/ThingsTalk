@@ -15,8 +15,9 @@ import com.lr.thingstalk.presentation.components.*
 import com.lr.thingstalk.presentation.navigation.*
 import com.lr.thingstalk.presentation.device.DeviceWorkspaceViewModel
 import com.lr.thingstalk.presentation.panel.rememberPanelFileTransfer
+import com.lr.thingstalk.presentation.panel.preparePanelImport
+import com.lr.thingstalk.presentation.panel.PreparedPanelImport
 import com.lr.thingstalk.presentation.theme.Muted
-import com.lr.thingstalk.platformCapabilities
 
 @Composable
 internal fun TemplatePages(route: Route, activity: ActivityRepository, workspace: DeviceWorkspaceViewModel,
@@ -27,15 +28,16 @@ internal fun TemplatePages(route: Route, activity: ActivityRepository, workspace
     val devices by workspace.devices.collectAsState()
     var source by remember { mutableStateOf("") }
     var title by remember { mutableStateOf("") }
+    var prepared by remember { mutableStateOf<PreparedPanelImport?>(null) }
     var localError by remember { mutableStateOf<String?>(null) }
     var targetId by remember { mutableStateOf<String?>(null) }
     var deleting by remember { mutableStateOf(false) }
     fun importText(text: String) {
         try {
-            val panel = PanelJson.decode(text)
-            require(platformCapabilities().ble || panel.transport == PanelTransport.MQTT) { tr(AppStrings.web_supports_mqtt_templates_only_afeec3) }
-            source = PanelJson.encode(panel); title = panel.title; localError = null
-        } catch (_: Exception) { localError = tr(AppStrings.unsupported_format_or_platform_use_a_valid_thingstalk_p_7a1a41) }
+            val imported = preparePanelImport(text)
+            prepared = imported
+            source = imported.source; title = imported.panel.title; localError = null
+        } catch (failure: Exception) { localError = failure.message ?: tr(AppStrings.unsupported_format_or_platform_use_a_valid_thingstalk_p_7a1a41) }
     }
     val files = rememberPanelFileTransfer(::importText, feedback)
     val template = archive.templates.firstOrNull { it.id == route.id }
@@ -73,18 +75,22 @@ internal fun TemplatePages(route: Route, activity: ActivityRepository, workspace
         archive.templates.forEach { t -> Item(t.title, tr(AppStrings.view_export_or_apply_to_a_compatible_device_68d50f)) { go(Route(Screen.PRESET, t.id)) } }
         if (archive.templates.isEmpty()) Text(tr(AppStrings.no_templates_yet_save_one_from_a_device_or_import_a_con_b0b358), color = Muted)
         Section(tr(AppStrings.save_template_from_device_ec49a7))
-        devices.forEach { d -> TextButton(onClick = { source = PanelJson.encode(d.panel); title = d.name; localError = null }) { Text(tr(AppStrings.use_the_saved_panel_of_c76859, d.name)) } }
+        devices.forEach { d -> TextButton(onClick = { source = PanelJson.encode(d.panel); title = d.name; localError = null; prepared = null }) { Text(tr(AppStrings.use_the_saved_panel_of_c76859, d.name)) } }
         Section(tr(AppStrings.import_and_save_0293c4))
         OutlinedButton(onClick = files.importFile, enabled = !files.busy) { Text(tr(AppStrings.import_thingstalk_json_ed1b67)) }
+        prepared?.notice()?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         OutlinedTextField(title, { title = it }, label = { Text(tr(AppStrings.template_name_bbc511)) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
         OutlinedTextField(source, { source = it }, label = { Text(tr(AppStrings.complete_panel_json_bc7c46)) }, modifier = Modifier.fillMaxWidth(), minLines = 4, maxLines = 10)
         Primary(tr(AppStrings.validate_and_save_template_8c4209), !files.busy && source.isNotBlank() && title.isNotBlank()) {
             try {
-                val panel = PanelJson.decode(source)
-                require(platformCapabilities().ble || panel.transport == PanelTransport.MQTT)
-                activity.saveTemplate(title.trim(), source)
-                localError = null; source = ""; title = ""
-            } catch (failure: Exception) { localError = tr(AppStrings.could_not_save_check_the_format_platform_name_and_templ_056469) }
+                val imported = preparePanelImport(source)
+                if (imported.mqttOnly) {
+                    prepared = imported; source = imported.source; localError = null
+                } else {
+                    activity.saveTemplate(title.trim(), imported.source)
+                    localError = null; source = ""; title = ""; prepared = null
+                }
+            } catch (failure: Exception) { localError = failure.message ?: tr(AppStrings.could_not_save_check_the_format_platform_name_and_templ_056469) }
         }
         localError?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }
         error?.let { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error) }

@@ -71,7 +71,7 @@ internal fun AdaptiveAppFrame(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 if (back != null) TextButton(onClick = back) { Text(tr(AppStrings.back_9c73b7)) }
-                                else Text("ThinsTalk", Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium)
+                                else Text(tr(AppStrings.app_name), Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.weight(1f))
                                 Tag(badge)
                             }

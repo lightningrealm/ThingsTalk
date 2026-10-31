@@ -39,7 +39,7 @@ fun WorkspacePages(route: Route, session: MockSession, go: (Route) -> Unit, mess
             Primary("保存模拟订阅") { message("订阅偏好已在当前演示中保存") }
             Text("告警规则由设备或服务端执行，不依赖手机后台保活。", color = Muted)
         }
-        Screen.MORE -> Page("YOUR WORKSPACE", "让连接，回归简单。", "ThinsTalk · 协议驱动的设备工作台") {
+        Screen.MORE -> Page("YOUR WORKSPACE", "让连接，回归简单。", "ThingsTalk · 协议驱动的设备工作台") {
             Panel { Tag("DEMO MODE"); Text("一处空间，无限可能。", style = MaterialTheme.typography.headlineSmall); Text("用同一种语言，理解不同的设备。", color = Muted) }
             Item("场景预设", "储物柜监测 · 灯光控制") { go(Route(Screen.PRESETS)) }
             Item("开发者设置", "定义设备报文、组件绑定与配置文件") { go(Route(Screen.DEVELOPER_SETTINGS)) }
@@ -47,7 +47,7 @@ fun WorkspacePages(route: Route, session: MockSession, go: (Route) -> Unit, mess
             Item("通知设置", "通道状态、偏好与模拟通知", "events") { go(Route(Screen.NOTIFICATIONS)) }
             Item("通信日志", "查看我的设备的真实 BLE 收发记录") { go(Route(Screen.BLE_LOG_DEVICES)) }
             Item("应用设置", "浅色、深色与主题配色", "more") { go(Route(Screen.SETTINGS)) }
-            Item("关于 ThinsTalk", "版本 1.0 · 毕设预览", "more") { go(Route(Screen.ABOUT)) }
+            Item("关于 ThingsTalk", "版本 1.0 · 毕设预览", "more") { go(Route(Screen.ABOUT)) }
         }
         Screen.PRESETS -> Page("SCENE LIBRARY", "从能力，到场景。", "预设定义展示方式，设备决定实际能力。") {
             Item("储物柜监测", "温湿度 · 柜门 · 告警阈值") { go(Route(Screen.PRESET, "cabinet")) }

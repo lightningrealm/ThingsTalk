@@ -20,7 +20,7 @@ enum class Screen(private val sourceTitle: String) {
     EVENTS("消息"), EVENT("事件详情"), SUBSCRIPTIONS("连接管理"), SUBSCRIPTION("连接详情"),
     ACTIVITY_RECORD("通信详情"), DATA_SETTINGS("数据管理"), LICENSES("开源组件"),
     MORE("我的"), PRESETS("面板模板"), PRESET("模板详情"), TRANSFER("导入与导出"),
-    API("服务连接"), NOTIFICATIONS("消息偏好"), SETTINGS("应用设置"), ABOUT("关于 ThinsTalk");
+    API("服务连接"), NOTIFICATIONS("消息偏好"), SETTINGS("应用设置"), ABOUT("关于语物");
 
     val title: String get() = com.lr.thingstalk.presentation.i18n.diagnosticText(sourceTitle)
 }

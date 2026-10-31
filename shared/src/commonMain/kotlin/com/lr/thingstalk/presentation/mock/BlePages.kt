@@ -19,13 +19,13 @@ fun BlePages(route: Route, session: MockSession, go: (Route) -> Unit, message: (
             if (session.scanning) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("正在发现附近的模拟设备…") }
             if (session.scanFinished) {
                 Section("发现 2 台设备")
-                Item("ThinsTalk Cabinet", "−48 dBm · 信号良好 · ESP32-C3", "bluetooth") { go(Route(Screen.BLE, "cabinet")) }
-                Item("ThinsTalk Light", "−62 dBm · 信号良好 · ESP32-C3", "light") { go(Route(Screen.BLE, "lamp")) }
+                Item("ThingsTalk Cabinet", "−48 dBm · 信号良好 · ESP32-C3", "bluetooth") { go(Route(Screen.BLE, "cabinet")) }
+                Item("ThingsTalk Light", "−62 dBm · 信号良好 · ESP32-C3", "light") { go(Route(Screen.BLE, "lamp")) }
             } else Text("扫描结果会显示在这里", color = Muted)
             Section("连接前检查")
             Panel { KeyValue("蓝牙", "模拟已开启"); KeyValue("附近设备权限", "演示无需授权"); KeyValue("连接数量", "仅支持一个活动连接") }
         }
-        Screen.BLE -> Page("BLE WORKSPACE", if (route.id == "lamp") "ThinsTalk Light" else "ThinsTalk Cabinet", "GATT 调试工作台 · 模拟外设") {
+        Screen.BLE -> Page("BLE WORKSPACE", if (route.id == "lamp") "ThingsTalk Light" else "ThingsTalk Cabinet", "GATT 调试工作台 · 模拟外设") {
             Panel { Tag(if (session.connected && session.connectedDevice == route.id) "已连接（模拟）" else "未连接"); KeyValue("信号", "−48 dBm"); KeyValue("ATT MTU", "23 bytes"); KeyValue("单次写入上限", "20 bytes"); Primary(if (session.connected && session.connectedDevice == route.id) "断开模拟连接" else "连接模拟设备") { if (session.connected && session.connectedDevice == route.id) session.disconnect() else { session.observing = false; session.connectedDevice = route.id; session.connected = true; session.log("连接成功，已发现服务") } } }
             Item("服务与特征", "2 个服务 · 3 个特征 · 2 个描述符", "bluetooth") { if (session.connected && session.connectedDevice == route.id) go(Route(Screen.SERVICES, route.id)) else message("请先连接模拟设备") }
             Item("通信日志", "读写与通知的完整记录", "events") { go(Route(Screen.LOGS)) }

@@ -22,7 +22,7 @@ PanelDefinition 是包含普通组件和可选设置表单的整个设备配置�
 | 设置表单，单 BLE 或与双连接控制共存 | 7 | transport BLE/DUAL，channels 两侧绑定，setupPanels；仅 DUAL 指定 defaultChannel |
 | 旧双连接固定混合路由 | 5 | 顶层 bindings 内 controlTransport/stateTransport |
 
-旧 BLE v1/v2 可导入。v7 解析也支持不含设置表单的 MQTT，但纯 MQTT 新交付推荐 v4；Web 只提供 MQTT 功能，不支持 BLE/DUAL/设置表单。v6/v7 中没有操作的一侧用 bindings: []，不保留旧顶层 bindings。需要设置表单时整份文件升级 v7，不能仅在 v3/v4/v6 中追加 setupPanels。
+旧 BLE v1/v2 可导入。v7 解析也支持不含设置表单的 MQTT，但纯 MQTT 新交付推荐 v4；Web 只运行 MQTT 功能；导入有效 v5/v6/v7 双连接配置时会提示功能可能缺失，并提取 MQTT 部分为 v4：移除 BLE 操作、设置表单及无法通过 MQTT 操作的组件，保留 MQTT Topic、编解码格式和作者文案。仅 BLE 或没有 MQTT 绑定的双连接配置会被拒绝。原文件不变，Web 后续导出的是 MQTT 配置。v6/v7 中没有操作的一侧用 bindings: []，不保留旧顶层 bindings。需要设置表单时整份文件升级 v7，不能仅在 v3/v4/v6 中追加 setupPanels。
 
 普通组件规范如下；MQTT、双连接及本机连接配置见 references/mqtt-dual.md；设置表单见 references/ble-network-provisioning.md。独立 PROMPT.md 已内嵌这些规范与示例。
 
@@ -152,4 +152,4 @@ Muyu v1 外设在 BLE 连接后可通过专用“设备网络设置”表单输�
 
 Android 文件导入不依赖文件管理器提供正确的 MIME 类型，选中文件后仍校验 UTF-8、大小及完整配置结构。文件选择返回早于本机草稿恢复时，编辑器会等待加载；恢复冲突或读取错误需先处理，不能声称已导入。导入成功仅载入草稿，仍需保存应用。
 
-用户可从设备列表或发现页“从配置文件创建设备”，客户端先用真实解析器校验文件，按解析后的 transport 自动创建 BLE/MQTT/DUAL 设备，名称预填 title，确认后一次保存完整面板，无需先手选连接类型。声明 DUAL 但一侧尚无绑定仍保持双连接。扫描外设后的“从配置创建并关联”仅接收 BLE/DUAL；Web 仍仅支持 MQTT。已有设备的编辑器导入不会自动改变该设备类型，类型不符时引导创建新设备。导入创建不会自动连接或写入硬件。
+用户可从设备列表或发现页“从配置文件创建设备”，客户端先用真实解析器校验文件，按解析后的 transport 自动创建 BLE/MQTT/DUAL 设备，名称预填 title，确认后一次保存完整面板，无需先手选连接类型。声明 DUAL 但一侧尚无绑定仍保持双连接。扫描外设后的“从配置创建并关联”仅接收 BLE/DUAL；Web 会提示并将双连接配置提取为 MQTT 副本，只有蓝牙的配置会拒绝。已有设备的编辑器导入不会自动改变该设备类型，类型不符时引导创建新设备。导入创建不会自动连接或写入硬件。

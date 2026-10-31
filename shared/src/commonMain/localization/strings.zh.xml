@@ -591,7 +591,7 @@
   <string name="open_source_components_c71482">开源组件</string>
   <string name="refer_to_each_dependency_version_s_distribution_for_lic_1dffbf">许可证原文与第三方声明以对应依赖版本的发行包为准。</string>
   <string name="web_supports_mqtt_templates_only_afeec3">Web 仅支持 MQTT 模板</string>
-  <string name="unsupported_format_or_platform_use_a_valid_thingstalk_p_7a1a41">配置格式或平台类型不支持，请使用真实 ThingsTalk 面板文件。</string>
+  <string name="unsupported_format_or_platform_use_a_valid_thingstalk_p_7a1a41">配置格式或平台类型不支持，请使用真实 语物 面板文件。</string>
   <string name="template_not_found_ecb0c7">模板不存在</string>
   <string name="load_an_editing_draft_first_the_device_panel_changes_on_2896e2">应用前先载入编辑草稿，保存后才改变设备面板。</string>
   <string name="format_version_9d04be">格式版本</string>
@@ -886,7 +886,7 @@
   <string name="message_import_and_export_db7d8a">导入与导出</string>
   <string name="message_service_connections_71203e">服务连接</string>
   <string name="message_app_settings_0c79c2">应用设置</string>
-  <string name="message_about_thingstalk_1c26ab">关于 ThinsTalk</string>
+  <string name="message_about_thingstalk_1c26ab">关于 语物</string>
   <string name="message_could_not_save_settings_retry_c063f6">外观保存失败，请重试</string>
   <string name="message_ble_disconnected_6a2464">BLE 连接已断开</string>
   <string name="message_ble_connection_or_discovery_timed_out_retry_o_934ab9">BLE 连接或服务发现超时，请重试或重新扫描</string>
@@ -1325,7 +1325,12 @@
   <string name="message_bluetooth_scan_failed_c3b26a">蓝牙扫描失败：%1$s</string>
   <string name="message_no_reason_provided_by_the_system_8d6256">系统未提供原因</string>
   <string name="message_system_could_not_find_the_saved_device_rescan_5dc0d8">系统未找到已保存的设备，请重新扫描并关联</string>
-  <string name="web_loading">正在加载 ThingsTalk…</string>
+  <string name="web_loading">正在加载 语物…</string>
   <string name="web_font_failed">无法加载本地字体。</string>
   <string name="retry">重试</string>
+  <string name="app_name">语物</string>
+  <string name="web_title">语物 · MQTT 工作台</string>
+  <string name="web_dual_import_notice">该配置包含蓝牙 + MQTT，但网页版仅支持 MQTT，部分功能可能不可用。将保留 %1$s 个组件，跳过 %2$s 个不可用组件和 %3$s 个蓝牙设置表单。导入后导出的是 MQTT 配置，原文件保持不变。</string>
+  <string name="web_ble_import_unsupported">该配置仅包含蓝牙，网页版无法使用；请提供 MQTT 配置</string>
+  <string name="web_dual_import_no_mqtt">该双连接配置没有可用的 MQTT 绑定，无法在网页版导入</string>
 </resources>

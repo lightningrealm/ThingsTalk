@@ -1328,4 +1328,9 @@ Characteristic %2$s</string>
   <string name="web_loading">Loading ThingsTalk…</string>
   <string name="web_font_failed">The local font could not be loaded.</string>
   <string name="retry">Retry</string>
+  <string name="app_name">ThingsTalk</string>
+  <string name="web_title">ThingsTalk · MQTT workspace</string>
+  <string name="web_dual_import_notice">This configuration includes BLE + MQTT, but Web supports MQTT only. Some features may be unavailable. Keeping %1$s widgets; skipping %2$s unsupported widgets and %3$s BLE setup forms. Exports will contain MQTT only; the original file stays unchanged.</string>
+  <string name="web_ble_import_unsupported">This configuration contains BLE only and cannot be used on Web. Provide an MQTT configuration.</string>
+  <string name="web_dual_import_no_mqtt">This dual-connection configuration has no usable MQTT bindings and cannot be imported on Web.</string>
 </resources>

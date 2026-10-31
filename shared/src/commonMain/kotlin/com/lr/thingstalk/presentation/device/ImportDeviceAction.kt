@@ -6,11 +6,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lr.thingstalk.data.panel.PanelJson
 import com.lr.thingstalk.domain.device.BleDeviceTarget
 import com.lr.thingstalk.domain.panel.*
-import com.lr.thingstalk.platformCapabilities
 import com.lr.thingstalk.presentation.panel.rememberPanelFileTransfer
+import com.lr.thingstalk.presentation.panel.PreparedPanelImport
+import com.lr.thingstalk.presentation.panel.preparePanelImport
 import com.lr.thingstalk.presentation.theme.Muted
 
 /** Parse first: the file defines the transport; no empty device is created before validation. */
@@ -19,12 +19,14 @@ fun ImportDeviceAction(workspace: DeviceWorkspaceViewModel, onCreated: (String) 
     target: BleDeviceTarget? = null) {
     val status by workspace.status.collectAsState()
     var definition by remember { mutableStateOf<PanelDefinition?>(null) }
+    var prepared by remember { mutableStateOf<PreparedPanelImport?>(null) }
     var name by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     val files = rememberPanelFileTransfer(onImport = { source ->
         try {
-            val parsed = PanelJson.decode(source)
-            require(platformCapabilities().ble || parsed.transport == PanelTransport.MQTT) { tr(AppStrings.web_supports_mqtt_device_configurations_only_3abd2c) }
+            val imported = preparePanelImport(source)
+            val parsed = imported.panel
+            prepared = imported
             require(target == null || parsed.transport != PanelTransport.MQTT) { tr(AppStrings.mqtt_only_configurations_do_not_need_ble_create_one_usi_91c73c) }
             definition = parsed
             name = parsed.title
@@ -40,7 +42,9 @@ fun ImportDeviceAction(workspace: DeviceWorkspaceViewModel, onCreated: (String) 
             title = { Text(tr(AppStrings.create_from_configuration_ffff88)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(tr(AppStrings.detected_1fbdd8, if (panel.transport == PanelTransport.DUAL) tr(AppStrings.ble_mqtt_dual_connection_b44cfe) else panel.transport.name))
+                    prepared?.notice()?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    val detected = prepared?.original?.transport ?: panel.transport
+                    Text(tr(AppStrings.detected_1fbdd8, if (detected == PanelTransport.DUAL) tr(AppStrings.ble_mqtt_dual_connection_b44cfe) else detected.name))
                     Text(tr(AppStrings.widgets_setup_forms_279516, panel.widgets.size, panel.setupPanels.size), color = Muted)
                     OutlinedTextField(name, { name = it }, label = { Text(tr(AppStrings.device_name_4433eb)) }, singleLine = true, enabled = !status.busy)
                     target?.let { Text(tr(AppStrings.ble_link_ea3ebb, it.name ?: it.id), color = Muted) }

@@ -1,6 +1,6 @@
 ---
 name: thingstalk-ble-panel
-description: 为 ThingsTalk/ThinsTalk 设计 BLE、MQTT 或双连接硬件协议及可导入面板；用于映射 GATT/topic、定义普通控制面板与 BLE 设置表单、交付硬件配套配置和维护兼容规范。
+description: 为 语物（ThingsTalk） 设计 BLE、MQTT 或双连接硬件协议及可导入面板；用于映射 GATT/topic、定义普通控制面板与 BLE 设置表单、交付硬件配套配置和维护兼容规范。
 ---
 
 # BLE、MQTT 与双连接面板共同交付

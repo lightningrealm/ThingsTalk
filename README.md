@@ -1,6 +1,6 @@
-# ThingsTalk
+# 语物 · ThingsTalk
 
-ThingsTalk 是使用 Kotlin Multiplatform / Compose Multiplatform 构建的本地设备工作台。Android 和 iOS 支持 BLE 与 MQTT；Web（Kotlin/Wasm）支持 MQTT。
+语物（ThingsTalk）是使用 Kotlin Multiplatform / Compose Multiplatform 构建的本地设备工作台。Android 和 iOS 支持 BLE 与 MQTT；Web（Kotlin/Wasm）支持 MQTT。
 
 ## 功能
 
