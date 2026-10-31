@@ -35,3 +35,13 @@ ThingsTalk 是使用 Kotlin Multiplatform / Compose Multiplatform 构建的本�
 修改协议或组件时同步校验、示例、Skill 和 Prompt。运行共享测试及受影响平台编译；真实外设、Broker、后台和权限行为需要真机验收。编译或模拟器通过不等于硬件验收通过。
 
 企划、调研草稿、会话交接、排查流水及生成预览统一放在 `docs/local/`，由 `.gitignore` 排除。该目录不是项目运行或构建的依赖。不得提交凭据、本机配置或构建产物。
+
+## 许可证
+
+Copyright 2026 lightningduke。
+
+除另有声明的第三方内容外，本仓库的客户端代码、协议文档、配置示例、硬件开发 Skill/Prompt 和项目原创图标资源均采用 [Apache License 2.0](LICENSE)。允许商业使用、修改和再分发，使用及分发时须遵守许可证中的声明保留等要求。版权及第三方提示见 [NOTICE](NOTICE)。
+
+硬件开发 Skill 目录附有独立的 [LICENSE](skills/thingstalk-ble-panel/LICENSE) 和 [NOTICE](skills/thingstalk-ble-panel/NOTICE)，单独分发该包时请一并保留。
+
+第三方依赖和素材继续遵循各自许可证；特别是 Web 内置字体采用 [SIL Open Font License 1.1](shared/src/wasmJsMain/resources/fonts/OFL.txt)，不改为 Apache-2.0。本项目许可证不授予 ThingsTalk 名称或标识的商标使用权（许可证第 6 条允许的合理描述用途除外），也不代表官方背书。

@@ -1,0 +1,12 @@
+ThingsTalk
+Copyright 2026 lightningduke
+
+This project is licensed under the Apache License, Version 2.0.
+Third-party components remain subject to their own licenses and notices.
+
+The bundled Web font, ThingsTalkSansSC-Regular.ttf, is derived from Noto Sans SC
+and is licensed under the SIL Open Font License, Version 1.1, not Apache-2.0.
+Its original copyright and license are preserved in:
+shared/src/wasmJsMain/resources/fonts/OFL.txt
+
+The Gradle Wrapper retains its original copyright and license notices.
