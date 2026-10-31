@@ -1,5 +1,7 @@
 # 设备创建与配置导入
 
+请选择设备的 `*.thingstalk.json` 面板配置。带有 `configuration`、`valid`/`invalid`、`hex`/`reason` 的文件通常是协议测试向量，不能作为面板导入；请改选其 `configuration` 指向的配置文件。
+
 设备列表和发现页提供两种独立入口：
 
 - **手动创建设备**：选择 BLE、MQTT 或双连接，填写名称后创建空白设备；无需导入文件。Web 仅支持 MQTT。

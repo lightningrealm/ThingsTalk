@@ -1,6 +1,6 @@
 # ThingsTalk 硬件开发配套 Prompt
 
-兼容快照：文档修订 25，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
+兼容快照：文档修订 26，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
 这是一份可独立发送的 Prompt，不需要访问原 App 仓库。它描述核对时的实现，不能假设之后新增功能自动可用。
 
 请为我指定的硬件能力，同时交付 BLE、MQTT 或双连接固件协议和 ThingsTalk 可导入的面板配置。按目标平台选择版本：Web 仅 MQTT 功能，推荐 v4；Android/iOS 可用 BLE v3、MQTT v4、DUAL v6（旧 v5 混合路由仍兼容）。需要 BLE 设置表单时使用 v7 setupPanels，按下文规范填写。
@@ -26,6 +26,8 @@ MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地�
 应用内置界面支持简体中文和英文，可跟随系统或手动选择。导入配置中的 `title`、`label`、说明、单位及用户填写内容保持原文，不随应用语言自动翻译。请按硬件用户的目标语言填写这些文案；当前没有 `localizedTitles` 等多语言 JSON 字段。UUID、topic、字段 ID、枚举值和二进制/JSON 报文格式不参与翻译，不因应用语言变化而改变。为其他语言交付配置时只调整显示文案，不修改协议标识或编码。
 
 ## 0. 配置层次与版本选择
+
+App 导入的是 `设备名.thingstalk.json` 面板配置，不是协议测试向量文件。含 `configuration` 文件名引用和 `valid`/`invalid` 用例的 JSON（例如 `wire-vectors.json`）供开发与测试使用；应选择 `configuration` 指向的配置文件导入。客户端不会自动加载该引用，也不会忽略未知字段来尝试导入测试文件。
 
 | 概念 | 配置位置 | 用途与边界 |
 | --- | --- | --- |

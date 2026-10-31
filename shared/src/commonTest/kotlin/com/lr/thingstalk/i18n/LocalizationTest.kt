@@ -59,4 +59,14 @@ class LocalizationTest {
         }
     }
 
+    @Test fun createDeviceImportErrorTranslatesItsCause() {
+        val cause = AppStrings.panel_import_test_vectors
+        val outer = AppStrings.could_not_create_device_d02fbe
+        for (outerLanguage in AppLanguage.entries) {
+            assertEquals(outer.resolve(AppLanguage.ENGLISH, cause.resolve(AppLanguage.ENGLISH)),
+                DiagnosticTranslations.resolve(
+                    outer.resolve(outerLanguage, cause.resolve(AppLanguage.CHINESE)), AppLanguage.ENGLISH))
+        }
+    }
+
 }

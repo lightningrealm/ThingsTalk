@@ -43,6 +43,7 @@ internal object DiagnosticTranslations {
     // Only these slots contain another application diagnostic. Other arguments may be
     // user-authored field names or topics, even when they happen to match a catalog entry.
     private val nestedCause = mapOf(
+        "无法创建设备：%1\$s" to 0,
         "读取失败：%1\$s" to 0,
         "通知订阅失败：%1\$s" to 0,
         "导入失败：%1\$s" to 0,

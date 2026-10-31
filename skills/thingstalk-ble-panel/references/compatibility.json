@@ -1,5 +1,5 @@
 {
-  "contractRevision": 25,
+  "contractRevision": 26,
   "reviewedOn": "2026-11-01",
   "panelSchemaVersions": {
     "BLE": 3,
@@ -85,7 +85,7 @@
     "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/BleFailureDiagnostic.kt": "8a785cfac76222d572c9c53edc2b4a0f10a741cf62521a7fa8bcd5d3ba5f2de9",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/ble/BleSetupPanelClient.kt": "6dd174f1a09f2fb3834adce0c9a6d7bca908ac5eb98230cb816b03a9083017c0",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/device/DeviceWorkspaceViewModel.kt": "4f5ddf0d47a5f8d0f3815815f9ac68cf330f7e4da3e6f40c3260ec2796bf1137",
-    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelJson.kt": "b48ce5489eaad13c7c5e4b76ddeac69761efa324a015b927b3864d7e74bb6829",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelJson.kt": "e0d132858bff9879fcae1c5cc98aec7049409a70339876310375628195a85d6e",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelPayloadCodec.kt": "00c45085a0d543c7a92c473ba87ed7b9491dfd966f57fd92b5455f4937294abe",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/ChannelPanelJson.kt": "11cef5b5aa3492bbe77610ccbb3fe3d5e9b850a4991fa08924d95187d448de1c",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelValueCodec.kt": "84bfaa95460540212a3be6244ee6d94d8788d7ac34b31610768f6b51fbf3893c",
@@ -120,7 +120,7 @@
   "bundleHashes": {
     "references/ble-network-provisioning.md": "81f5b7f8770a9a12b84e11282a080d84dbafaca2a62a4bfbbeb9c6c7590e77d4",
     "SKILL.md": "cdadc1407e7ab50a2a6332b8c5ca838e9d63f21d765b71110c49b893b0a58b3c",
-    "references/contract.md": "651b7e2938289fffb955ef46da74e4dda4b73b035cf95b6c74540e5dd4bb3e7a",
+    "references/contract.md": "8fccbea19c842c9e256b0013448b7e74b46d47dd4e4a2b048158c517e5351155",
     "references/maintenance.md": "5dbb9882b26c08f5857cf0f0dcbb5857bde25965c8a60db8e0a9ccf81e5c87a9",
     "agents/openai.yaml": "fb515c9af801a22fba3badd5edca46b7b55bb25eb19a937a4bb65a0a9d90f98c",
     "assets/all-widgets.thingstalk.json": "8111d0f6c0006adf9533fa4b70993166234595292aee57fb268bcc346097c9e7",

@@ -1333,4 +1333,7 @@
   <string name="web_dual_import_notice">该配置包含蓝牙 + MQTT，但网页版仅支持 MQTT，部分功能可能不可用。将保留 %1$s 个组件，跳过 %2$s 个不可用组件和 %3$s 个蓝牙设置表单。导入后导出的是 MQTT 配置，原文件保持不变。</string>
   <string name="web_ble_import_unsupported">该配置仅包含蓝牙，网页版无法使用；请提供 MQTT 配置</string>
   <string name="web_dual_import_no_mqtt">该双连接配置没有可用的 MQTT 绑定，无法在网页版导入</string>
+  <string name="panel_import_test_vectors">该文件是协议测试向量，不是面板配置。请导入 configuration 指向的 .thingstalk.json 配置文件</string>
+  <string name="panel_import_object_required">面板配置必须是 JSON 对象，请选择 .thingstalk.json 文件</string>
+  <string name="panel_import_invalid_structure">无法解析面板配置：JSON 语法、字段或字段类型不符合规范，请选择设备的 .thingstalk.json 配置文件</string>
 </resources>
