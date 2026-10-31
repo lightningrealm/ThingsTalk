@@ -1,0 +1,814 @@
+{
+  "schemaVersion": 7,
+  "title": "电子木鱼 · BLE + MQTT",
+  "payloadFormats": [
+    {
+      "id": "status",
+      "label": "木鱼状态",
+      "encoding": "BINARY",
+      "prefixHex": "AA",
+      "suffixHex": "55",
+      "fields": [
+        {
+          "id": "count",
+          "codec": "UINT32"
+        },
+        {
+          "id": "volume",
+          "codec": "UINT8"
+        },
+        {
+          "id": "automatic",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "interval",
+          "codec": "UINT16"
+        },
+        {
+          "id": "audioReady",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "brightness",
+      "label": "亮度值",
+      "encoding": "BINARY",
+      "fields": [
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "hit",
+      "label": "敲一次",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "1"
+        },
+        {
+          "id": "value",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "clear",
+      "label": "清零",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "2"
+        },
+        {
+          "id": "value",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "setVolume",
+      "label": "设置音量",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "3"
+        },
+        {
+          "id": "value",
+          "codec": "UINT16"
+        }
+      ]
+    },
+    {
+      "id": "setAuto",
+      "label": "自动敲击",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "4"
+        },
+        {
+          "id": "value",
+          "codec": "BOOLEAN",
+          "falseHex": "0000",
+          "trueHex": "0100"
+        }
+      ]
+    },
+    {
+      "id": "setInterval",
+      "label": "设置间隔",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "5"
+        },
+        {
+          "id": "value",
+          "codec": "UINT16"
+        }
+      ]
+    },
+    {
+      "id": "mqttStatus",
+      "label": "MQTT 木鱼状态",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "count",
+          "codec": "UINT32"
+        },
+        {
+          "id": "volume",
+          "codec": "UINT8"
+        },
+        {
+          "id": "automatic",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "interval",
+          "codec": "UINT16"
+        },
+        {
+          "id": "audioReady",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "mqttHit",
+      "label": "MQTT hit",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "hit",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "mqttAutomatic",
+      "label": "MQTT automatic",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "automatic",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "mqttInterval",
+      "label": "MQTT interval",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "interval",
+          "codec": "UINT16"
+        }
+      ]
+    },
+    {
+      "id": "mqttVolume",
+      "label": "MQTT volume",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "volume",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "mqttBrightness",
+      "label": "MQTT brightness",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "mqttClear",
+      "label": "MQTT clear",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "clear",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "count",
+      "label": "本轮功德",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "unit": "次",
+      "step": 1
+    },
+    {
+      "id": "hit",
+      "label": "敲一下",
+      "type": "ACTION"
+    },
+    {
+      "id": "automatic",
+      "label": "自动敲击",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "interval",
+      "label": "自动间隔",
+      "type": "NUMBER",
+      "minimum": 300,
+      "maximum": 5000,
+      "unit": "ms",
+      "step": 1
+    },
+    {
+      "id": "volume",
+      "label": "音量",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 100,
+      "unit": "%",
+      "step": 1
+    },
+    {
+      "id": "brightness",
+      "label": "屏幕亮度",
+      "type": "NUMBER",
+      "minimum": 10,
+      "maximum": 100,
+      "unit": "%",
+      "step": 1
+    },
+    {
+      "id": "audioReady",
+      "label": "音频可用",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "batteryValid",
+      "label": "电量读数有效",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "battery",
+      "label": "电量（无效时忽略）",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 100,
+      "unit": "%",
+      "step": 1
+    },
+    {
+      "id": "clear",
+      "label": "清零本轮功德",
+      "type": "ACTION"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "countWidget",
+      "type": "VALUE",
+      "label": "本轮功德",
+      "capabilityId": "count"
+    },
+    {
+      "id": "hitWidget",
+      "type": "BUTTON",
+      "label": "敲一下",
+      "capabilityId": "hit"
+    },
+    {
+      "id": "automaticWidget",
+      "type": "SWITCH",
+      "label": "自动敲击",
+      "capabilityId": "automatic"
+    },
+    {
+      "id": "intervalWidget",
+      "type": "NUMBER_INPUT",
+      "label": "自动间隔",
+      "capabilityId": "interval"
+    },
+    {
+      "id": "volumeWidget",
+      "type": "SLIDER",
+      "label": "音量",
+      "capabilityId": "volume"
+    },
+    {
+      "id": "brightnessWidget",
+      "type": "SLIDER",
+      "label": "屏幕亮度",
+      "capabilityId": "brightness"
+    },
+    {
+      "id": "audioReadyWidget",
+      "type": "VALUE",
+      "label": "音频可用",
+      "capabilityId": "audioReady"
+    },
+    {
+      "id": "batteryValidWidget",
+      "type": "VALUE",
+      "label": "电量读数有效",
+      "capabilityId": "batteryValid"
+    },
+    {
+      "id": "batteryWidget",
+      "type": "VALUE",
+      "label": "电量（无效时忽略）",
+      "capabilityId": "battery"
+    },
+    {
+      "id": "clearWidget",
+      "type": "BUTTON",
+      "label": "清零本轮功德",
+      "capabilityId": "clear"
+    }
+  ],
+  "transport": "DUAL",
+  "defaultChannel": "BLE",
+  "channels": {
+    "ble": {
+      "bindings": [
+        {
+          "capabilityId": "count",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "count"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "count"
+            }
+          }
+        },
+        {
+          "capabilityId": "hit",
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "hit"
+            }
+          }
+        },
+        {
+          "capabilityId": "automatic",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "automatic"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "setAuto",
+              "fieldId": "value"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "automatic"
+            }
+          }
+        },
+        {
+          "capabilityId": "interval",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "interval"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "setInterval",
+              "fieldId": "value"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "interval"
+            }
+          }
+        },
+        {
+          "capabilityId": "volume",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "volume"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "setVolume",
+              "fieldId": "value"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "volume"
+            }
+          }
+        },
+        {
+          "capabilityId": "brightness",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          }
+        },
+        {
+          "capabilityId": "audioReady",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "audioReady"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "audioReady"
+            }
+          }
+        },
+        {
+          "capabilityId": "batteryValid",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "batteryValid"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "batteryValid"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "read": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "clear",
+          "write": {
+            "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c52a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "clear"
+            }
+          }
+        }
+      ]
+    },
+    "mqtt": {
+      "bindings": [
+        {
+          "capabilityId": "count",
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "count"
+            }
+          }
+        },
+        {
+          "capabilityId": "hit",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/action/hit",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttHit"
+            }
+          }
+        },
+        {
+          "capabilityId": "automatic",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/set/automatic",
+            "qos": 1,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttAutomatic",
+              "fieldId": "automatic"
+            }
+          },
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "automatic"
+            }
+          }
+        },
+        {
+          "capabilityId": "interval",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/set/interval",
+            "qos": 1,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttInterval",
+              "fieldId": "interval"
+            }
+          },
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "interval"
+            }
+          }
+        },
+        {
+          "capabilityId": "volume",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/set/volume",
+            "qos": 1,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttVolume",
+              "fieldId": "volume"
+            }
+          },
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "volume"
+            }
+          }
+        },
+        {
+          "capabilityId": "brightness",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/set/brightness",
+            "qos": 1,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttBrightness",
+              "fieldId": "brightness"
+            }
+          },
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "brightness"
+            }
+          }
+        },
+        {
+          "capabilityId": "audioReady",
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "audioReady"
+            }
+          }
+        },
+        {
+          "capabilityId": "batteryValid",
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "batteryValid"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "subscribe": {
+            "topic": "thingstalk/muyu/muyu-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttStatus",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "clear",
+          "publish": {
+            "topic": "thingstalk/muyu/muyu-01/action/clear",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "mqttClear"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "setupPanels": [
+    {
+      "id": "networkSetup",
+      "title": "设备网络设置",
+      "instructions": "长按设备 UP 键开启设置窗口，然后点击准备设备设置；如系统提示配对，请完成配对。读取成功后填写，保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c52a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c52a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "Wi-Fi",
+          "fields": [
+            {
+              "id": 1,
+              "label": "SSID",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c52a007-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 2,
+              "label": "Wi-Fi 密码",
+              "maxBytes": 64,
+              "secret": true,
+              "rule": "WIFI_PSK"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "MQTT",
+          "fields": [
+            {
+              "id": 3,
+              "label": "Broker URI",
+              "maxBytes": 192,
+              "minBytes": 1,
+              "readUuid": "5c52a008-7d8a-4b19-9c63-414950415353",
+              "rule": "MQTT_URI"
+            },
+            {
+              "id": 4,
+              "label": "用户名",
+              "maxBytes": 64,
+              "readUuid": "5c52a009-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 5,
+              "label": "MQTT 密码",
+              "maxBytes": 128,
+              "secret": true
+            },
+            {
+              "id": 6,
+              "label": "设备名称",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c52a00a-7d8a-4b19-9c63-414950415353",
+              "rule": "IDENTIFIER",
+              "defaultValue": "muyu-01"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

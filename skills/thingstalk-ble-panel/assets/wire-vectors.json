@@ -1,0 +1,97 @@
+{
+  "configuration": "all-widgets.thingstalk.json",
+  "valid": [
+    {
+      "formatId": "status",
+      "hex": "AA C4 09 01 32 55",
+      "values": {
+        "temperature": "25",
+        "power": "true",
+        "brightness": "50"
+      }
+    },
+    {
+      "formatId": "status",
+      "hex": "AA 2E FB 00 00 55",
+      "values": {
+        "temperature": "-12.34",
+        "power": "false",
+        "brightness": "0"
+      }
+    },
+    {
+      "formatId": "status",
+      "hex": "AA 20 4E 01 64 55",
+      "values": {
+        "temperature": "200",
+        "power": "true",
+        "brightness": "100"
+      }
+    },
+    {
+      "formatId": "setPower",
+      "hex": "A1 02 01 EE",
+      "values": {
+        "command": "2",
+        "power": "true"
+      }
+    },
+    {
+      "formatId": "setPower",
+      "hex": "A1 02 00 EE",
+      "values": {
+        "command": "2",
+        "power": "false"
+      }
+    },
+    {
+      "formatId": "setBrightness",
+      "hex": "A1 03 00 EE",
+      "values": {
+        "command": "3",
+        "brightness": "0"
+      }
+    },
+    {
+      "formatId": "setBrightness",
+      "hex": "A1 03 64 EE",
+      "values": {
+        "command": "3",
+        "brightness": "100"
+      }
+    },
+    {
+      "formatId": "locate",
+      "hex": "A1 04 01 EE",
+      "values": {
+        "command": "4",
+        "duration": "1"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "formatId": "status",
+      "hex": "AA C4 09 01 55",
+      "reason": "缺少亮度字节，整帧长度错误"
+    },
+    {
+      "formatId": "status",
+      "hex": "AB C4 09 01 32 55",
+      "reason": "帧头不符"
+    },
+    {
+      "formatId": "status",
+      "hex": "AA C4 09 02 32 55",
+      "reason": "未知布尔编码"
+    },
+    {
+      "formatId": "setBrightness",
+      "values": {
+        "command": "3",
+        "brightness": "12.5"
+      },
+      "reason": "UINT8不能表达小数"
+    }
+  ]
+}

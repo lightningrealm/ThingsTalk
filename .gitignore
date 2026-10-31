@@ -1,0 +1,55 @@
+# Gradle / Kotlin / Android build output
+.gradle/
+.kotlin/
+**/build/
+!src/**/build/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+
+# Machine-specific SDK paths and IDE settings
+local.properties
+.idea/
+*.iml
+
+# Xcode local state and build output
+xcuserdata/
+*.xcuserstate
+DerivedData/
+*.xcarchive/
+*.ipa
+*.dSYM/
+*.dSYM.zip
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# Local signing credentials (keep shared project configuration tracked)
+*.jks
+*.keystore
+*.p12
+*.p8
+*.mobileprovision
+keystore.properties
+key.properties
+
+# Local environment overrides; allow documented templates
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# macOS and editor temporary files
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+
+# Optional JavaScript tooling
+node_modules/
+
+# Local-only planning, AI work notes, diagnostics and generated previews
+/docs/local/
+/.codex/
+/.agents/

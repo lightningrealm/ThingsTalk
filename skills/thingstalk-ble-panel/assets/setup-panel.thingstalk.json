@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 7,
+  "title": "设备网络设置示例",
+  "transport": "BLE",
+  "channels": {
+    "ble": {
+      "bindings": []
+    },
+    "mqtt": {
+      "bindings": []
+    }
+  },
+  "setupPanels": [
+    {
+      "id": "networkSetup",
+      "title": "设备网络设置",
+      "instructions": "长按设备 UP 键开启设置窗口，然后点击准备设备设置；如系统提示配对，请完成配对。读取成功后填写，保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c52a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c52a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "Wi-Fi",
+          "fields": [
+            {
+              "id": 1,
+              "label": "SSID",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c52a007-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 2,
+              "label": "Wi-Fi 密码",
+              "maxBytes": 64,
+              "secret": true,
+              "rule": "WIFI_PSK"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "MQTT",
+          "fields": [
+            {
+              "id": 3,
+              "label": "Broker URI",
+              "maxBytes": 192,
+              "minBytes": 1,
+              "readUuid": "5c52a008-7d8a-4b19-9c63-414950415353",
+              "rule": "MQTT_URI"
+            },
+            {
+              "id": 4,
+              "label": "用户名",
+              "maxBytes": 64,
+              "readUuid": "5c52a009-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 5,
+              "label": "MQTT 密码",
+              "maxBytes": 128,
+              "secret": true
+            },
+            {
+              "id": 6,
+              "label": "设备名称",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c52a00a-7d8a-4b19-9c63-414950415353",
+              "rule": "IDENTIFIER",
+              "defaultValue": "muyu-01"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

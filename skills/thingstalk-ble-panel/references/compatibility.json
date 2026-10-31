@@ -1,0 +1,131 @@
+{
+  "contractRevision": 23,
+  "reviewedOn": "2026-10-31",
+  "panelSchemaVersions": {
+    "BLE": 3,
+    "MQTT": 4,
+    "DUAL": 6,
+    "SETUP": 7
+  },
+  "platforms": {
+    "Android": [
+      "BLE",
+      "MQTT",
+      "DUAL"
+    ],
+    "iOS": [
+      "BLE",
+      "MQTT",
+      "DUAL"
+    ],
+    "Web": [
+      "MQTT"
+    ]
+  },
+  "enums": {
+    "WidgetType": [
+      "VALUE",
+      "SWITCH",
+      "SLIDER",
+      "BUTTON",
+      "NUMBER_INPUT"
+    ],
+    "CapabilityType": [
+      "BOOLEAN",
+      "NUMBER",
+      "ACTION"
+    ],
+    "CodecType": [
+      "UINT8",
+      "BOOLEAN",
+      "HEX",
+      "INT8",
+      "UINT16",
+      "INT16",
+      "UINT32",
+      "INT32",
+      "FLOAT32"
+    ],
+    "PanelWriteMode": [
+      "WITH_RESPONSE",
+      "WITHOUT_RESPONSE"
+    ],
+    "PanelByteOrder": [
+      "LITTLE_ENDIAN",
+      "BIG_ENDIAN"
+    ],
+    "PayloadEncoding": [
+      "BINARY",
+      "JSON"
+    ],
+    "PanelTransport": [
+      "BLE",
+      "MQTT",
+      "DUAL"
+    ],
+    "SetupProtocol": [
+      "BLE_CHUNKED_SETTINGS_V1"
+    ],
+    "SetupFieldRule": [
+      "TEXT",
+      "WIFI_PSK",
+      "MQTT_URI",
+      "IDENTIFIER"
+    ]
+  },
+  "sourceHashes": {
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/PanelDefinition.kt": "e9ef33a6b8eb144cbe45b7844ac81ae0f01784b10624a3951c5da9d853cd66b1",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/PayloadFormat.kt": "a783845d2dd04c707b5479bc329250059751f8410221fa53fa017e2b3f3b888f",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/MuyuProvisioning.kt": "7c39cf959106e4ed624b10d5ad175703be2b68e54cd01228fef5442e82a67460",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/ble/MuyuProvisioningClient.kt": "1710800d4653f55c3688acd28119b873a1d9bffd9e8c478f3c32869a8a7d1605",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/ble/TracingBleConnection.kt": "cee838f38370b9f87b041de889904053444445e1f887de8147003f02a18ee568",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/SetupPanelView.kt": "f350207383f9a3f27aa027ec4e5f1a8d486ebaf38e65bc6380e15498ae72d88e",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/SetupPanel.kt": "3d7526662d1465685f61c3e8a856cc753d7dd205541600ac6d9e97cb6891c2ed",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/ChunkedBleSettingsProtocol.kt": "8a7777d056a8d69abea9d8dfa4f108b22e4928af6d7050c6a084db6f87826630",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/BleFailureDiagnostic.kt": "8a785cfac76222d572c9c53edc2b4a0f10a741cf62521a7fa8bcd5d3ba5f2de9",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/ble/BleSetupPanelClient.kt": "6dd174f1a09f2fb3834adce0c9a6d7bca908ac5eb98230cb816b03a9083017c0",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/device/DeviceWorkspaceViewModel.kt": "4f5ddf0d47a5f8d0f3815815f9ac68cf330f7e4da3e6f40c3260ec2796bf1137",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelJson.kt": "b48ce5489eaad13c7c5e4b76ddeac69761efa324a015b927b3864d7e74bb6829",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelPayloadCodec.kt": "00c45085a0d543c7a92c473ba87ed7b9491dfd966f57fd92b5455f4937294abe",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/ChannelPanelJson.kt": "11cef5b5aa3492bbe77610ccbb3fe3d5e9b850a4991fa08924d95187d448de1c",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/PanelValueCodec.kt": "84bfaa95460540212a3be6244ee6d94d8788d7ac34b31610768f6b51fbf3893c",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/BlePanelOperations.kt": "78b27d7b519ea055c885d2b4d5bd0f4a1d359f0f647d50bb2ef32985835a23cb",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/ConfigurableDevicePage.kt": "2d3b623f441006efb67df5955b4e7eccb51978f3b6c43e7099082ad4e92427f4",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelNumberControls.kt": "975031df8519856bcff594957950a776406fef2205788d48ac92d1328d7c52f8",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelFileTransfer.kt": "651a9c089d65bbab9e77d395d28d00ad66a9a97e15988faecae990678da93ef5",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/MqttPanelBinding.kt": "0a2a40f78e2606fb54a6ecc2df51afbec5d0e7d205de3fad0da97c256562ed12",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/DualPanelBinding.kt": "8bed25657be1b3ccb81701be76c92d22c6d99e98b20ccbd81973557deb332727",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/MqttPanelOperations.kt": "c203a4018568df183d1f2eb7c9f938ca35ef154bfcac2330a1954e176ae5d7be",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/DualPanelOperations.kt": "97fb0840376d250db760bfe19fcd659c453fb1e70e9eee835084c9ee31ed0691",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/mqtt/MqttProfile.kt": "58ea2bbc023e5f9fdd8000e117636228074589ea78e0be38577295d7c1263ad0",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/mqtt/MqttProfileStorage.kt": "aab28e545534789e29b57408a284637209a47709cef941a26c9a7c1f307ca4fc",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/mqtt/MqttValidation.kt": "35e53c7b83ab2deb80a326f3abf6f8dfe27d40af34df155a6b67cb8fe5f6cc65",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/data/mqtt/KtorMqttTransport.kt": "feb7112339e8e6d5cd59ef57af6715a7736442240033d6865de55ccfd72844b6",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/mqtt/MqttProfilePages.kt": "5f80039990a1962cd79269ffbf62c51923a20e5be6830c7fe5cfbd9e2abe0219",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/DualPanelBindingEditor.kt": "43ebc7028e448941974bf8abbc19e4ec19825eafe1ea4932ed23dad5571c1d20",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelEditorPage.kt": "97862fa1f93ad93750c118b95cf7b783aaeaeac8720f3868739f1178aad8546e",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/device/DeviceConnectionPanel.kt": "c8cabfd50847d693bcfc5540966130d3f2ab238a328dccd8c56741b1ea5a9943",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/components/TransportTabs.kt": "196c57dac9a0fbdcbf9091d19683dcd1dd3bc9e0f816299ba98acecfacb36fe8",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelViewModel.kt": "c6c40f09ba6f03d94acd079d32f83371a2b3ab2906bf688e77382561a2a53d90",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelStateSlices.kt": "0c9198d59524163e059b96b39c4e9456ae9859cfa0662144e20bbcc40d151d67",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelEditorViewModel.kt": "79820068d1b0984b3ec947a6051e462036245d97ea6b2978e800dcf1f4a3179b",
+    "shared/src/androidMain/kotlin/com/lr/thingstalk/data/mqtt/MqttProfileStorage.android.kt": "6a6cc2c9b60bdcb82a961fa72aab7ef22afddfc65d31529228568bbad0b0d890",
+    "shared/src/iosMain/kotlin/com/lr/thingstalk/data/mqtt/MqttProfileStorage.ios.kt": "9a02cb959b438ae525dcbe72c3aca94a92dc248309677ef5070c229367215895",
+    "shared/src/wasmJsMain/kotlin/com/lr/thingstalk/data/mqtt/MqttProfileStorage.wasmJs.kt": "f50baea96a92c79cd4fa7b25234ae4460b230289615594b009f5daacfde6b5c2"
+  },
+  "bundleHashes": {
+    "references/ble-network-provisioning.md": "81f5b7f8770a9a12b84e11282a080d84dbafaca2a62a4bfbbeb9c6c7590e77d4",
+    "SKILL.md": "792827a0a50ac9f6dc69fad282d1b6bdc451b44ee1f33251a367a6bf0b52c1ff",
+    "references/contract.md": "1473e54ff04a842ffb1b20fde06bd849523809d779589f4bdbe028fce14bca05",
+    "references/maintenance.md": "5dbb9882b26c08f5857cf0f0dcbb5857bde25965c8a60db8e0a9ccf81e5c87a9",
+    "agents/openai.yaml": "fb515c9af801a22fba3badd5edca46b7b55bb25eb19a937a4bb65a0a9d90f98c",
+    "assets/all-widgets.thingstalk.json": "8111d0f6c0006adf9533fa4b70993166234595292aee57fb268bcc346097c9e7",
+    "assets/wire-vectors.json": "7e267190cfd55ca23845a3322acf534a69be2abab0a6457294a51af5f933b0f7",
+    "scripts/sync_contract.py": "acf3ef1153512d605fa162b28c5b78a260f55a5accc49b4d3274b85b94301cdc",
+    "references/mqtt-dual.md": "0208c83ee226f71bf6b33e18668713a23057e582388c6d6c8a8ac07ac236d97e",
+    "assets/mqtt-all-widgets.thingstalk.json": "ec48d7e64114e4569c99dc45831252dcb824ec6a83d21096c5d871e1cd4cd464",
+    "assets/dual-power.thingstalk.json": "b009a184ba6fbd976c38dccf4107d83b06afac67b4e51328dc14d2cf9b5e2bd2",
+    "assets/dual-channels.thingstalk.json": "d084ac5f798c4966f8479712819c920adaf25328d9d906c1437d4feb2650002f",
+    "assets/setup-panel.thingstalk.json": "dc8d015883bbddf77340621be7cb5ecd4d4d112006da5148518d654c783c64a5"
+  }
+}

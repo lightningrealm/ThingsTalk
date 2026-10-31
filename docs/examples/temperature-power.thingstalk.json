@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 3,
+  "title": "温度与电源",
+  "payloadFormats": [
+    {
+      "id": "status",
+      "label": "设备状态报文",
+      "encoding": "BINARY",
+      "prefixHex": "AA",
+      "suffixHex": "55",
+      "fields": [
+        {
+          "id": "temperature",
+          "codec": "INT16",
+          "byteOrder": "LITTLE_ENDIAN",
+          "scale": 0.01
+        },
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "setPower",
+      "label": "电源控制报文",
+      "encoding": "BINARY",
+      "prefixHex": "A1",
+      "suffixHex": "EE",
+      "fields": [
+        {
+          "id": "command",
+          "codec": "UINT8",
+          "defaultValue": "2"
+        },
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "temperature",
+      "label": "温度",
+      "type": "NUMBER",
+      "minimum": -100,
+      "maximum": 200,
+      "unit": "℃"
+    },
+    {
+      "id": "power",
+      "label": "电源",
+      "type": "BOOLEAN"
+    }
+  ],
+  "bindings": [
+    {
+      "capabilityId": "temperature",
+      "read": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff1-0000-1000-8000-00805f9b34fb",
+        "payload": {
+          "formatId": "status",
+          "fieldId": "temperature"
+        }
+      },
+      "notify": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff1-0000-1000-8000-00805f9b34fb",
+        "payload": {
+          "formatId": "status",
+          "fieldId": "temperature"
+        }
+      }
+    },
+    {
+      "capabilityId": "power",
+      "read": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff1-0000-1000-8000-00805f9b34fb",
+        "payload": {
+          "formatId": "status",
+          "fieldId": "power"
+        }
+      },
+      "notify": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff1-0000-1000-8000-00805f9b34fb",
+        "payload": {
+          "formatId": "status",
+          "fieldId": "power"
+        }
+      },
+      "write": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff2-0000-1000-8000-00805f9b34fb",
+        "payload": {
+          "formatId": "setPower",
+          "fieldId": "power"
+        }
+      }
+    }
+  ],
+  "widgets": [
+    {
+      "id": "temperatureCard",
+      "type": "VALUE",
+      "label": "温度",
+      "capabilityId": "temperature"
+    },
+    {
+      "id": "powerSwitch",
+      "type": "SWITCH",
+      "label": "电源",
+      "capabilityId": "power"
+    }
+  ]
+}

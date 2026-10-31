@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+<title>ThingsTalk app icon — composite preview</title>
+<path fill="#F5F6F1" d="M0 0H108V108H0Z"/>
+<path fill="#416D60" d="M42 29H66C74.3 29 80 34.7 80 43V59C80 67.3 74.3 73 66 73H49L37.5 80.5C36.1 81.4 34.5 80.4 34.5 78.8V71.1C30.3 68.8 28 64.5 28 59V43C28 34.7 33.7 29 42 29Z"/>
+  <path fill="none" stroke="#F5F6F1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M42 46H50C53.3 46 55 47.7 55 51V54C55 57.3 56.7 59 60 59H66"/>
+  <circle cx="42" cy="46" r="4.5" fill="#F5F6F1"/>
+  <circle cx="66" cy="59" r="4.5" fill="#F5F6F1"/>
+</svg>

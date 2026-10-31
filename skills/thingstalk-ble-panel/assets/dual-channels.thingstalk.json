@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 6,
+  "transport": "DUAL",
+  "title": "双连接电源",
+  "capabilities": [
+    {
+      "id": "power",
+      "label": "电源",
+      "type": "BOOLEAN"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "powerSwitch",
+      "type": "SWITCH",
+      "label": "电源",
+      "capabilityId": "power"
+    }
+  ],
+  "payloadFormats": [
+    {
+      "id": "blePower",
+      "label": "BLE 电源状态与命令",
+      "encoding": "BINARY",
+      "fields": [
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "mqttPower",
+      "label": "MQTT 电源状态与命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        }
+      ]
+    }
+  ],
+  "defaultChannel": "BLE",
+  "channels": {
+    "ble": {
+      "bindings": [
+        {
+          "capabilityId": "power",
+          "read": {
+            "serviceUuid": "edb10000-7d17-4c5b-bb5a-2c78b0a10001",
+            "characteristicUuid": "edb10001-7d17-4c5b-bb5a-2c78b0a10001",
+            "payload": {
+              "formatId": "blePower",
+              "fieldId": "power"
+            }
+          },
+          "write": {
+            "serviceUuid": "edb10000-7d17-4c5b-bb5a-2c78b0a10001",
+            "characteristicUuid": "edb10001-7d17-4c5b-bb5a-2c78b0a10001",
+            "payload": {
+              "formatId": "blePower",
+              "fieldId": "power"
+            }
+          },
+          "notify": {
+            "serviceUuid": "edb10000-7d17-4c5b-bb5a-2c78b0a10001",
+            "characteristicUuid": "edb10001-7d17-4c5b-bb5a-2c78b0a10001",
+            "payload": {
+              "formatId": "blePower",
+              "fieldId": "power"
+            }
+          }
+        }
+      ]
+    },
+    "mqtt": {
+      "bindings": [
+        {
+          "capabilityId": "power",
+          "publish": {
+            "topic": "devices/lamp-01/set",
+            "payload": {
+              "formatId": "mqttPower",
+              "fieldId": "power"
+            },
+            "qos": 1
+          },
+          "subscribe": {
+            "topic": "devices/lamp-01/state",
+            "payload": {
+              "formatId": "mqttPower",
+              "fieldId": "power"
+            },
+            "qos": 1
+          }
+        }
+      ]
+    }
+  }
+}

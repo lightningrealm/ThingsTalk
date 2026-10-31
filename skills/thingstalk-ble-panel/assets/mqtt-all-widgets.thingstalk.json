@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 4,
+  "transport": "MQTT",
+  "title": "MQTT 温度与灯光",
+  "capabilities": [
+    {
+      "id": "temperature",
+      "label": "温度",
+      "type": "NUMBER",
+      "minimum": -100,
+      "maximum": 200,
+      "unit": "℃"
+    },
+    {
+      "id": "power",
+      "label": "电源",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "brightness",
+      "label": "亮度",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 100,
+      "step": 1,
+      "unit": "%"
+    },
+    {
+      "id": "locate",
+      "label": "定位一次",
+      "type": "ACTION"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "temperatureCard",
+      "type": "VALUE",
+      "label": "温度",
+      "capabilityId": "temperature"
+    },
+    {
+      "id": "powerSwitch",
+      "type": "SWITCH",
+      "label": "电源",
+      "capabilityId": "power"
+    },
+    {
+      "id": "brightnessSlider",
+      "type": "SLIDER",
+      "label": "亮度调节",
+      "capabilityId": "brightness"
+    },
+    {
+      "id": "brightnessInput",
+      "type": "NUMBER_INPUT",
+      "label": "输入亮度",
+      "capabilityId": "brightness"
+    },
+    {
+      "id": "locateButton",
+      "type": "BUTTON",
+      "label": "定位一次",
+      "capabilityId": "locate"
+    }
+  ],
+  "payloadFormats": [
+    {
+      "id": "state",
+      "label": "设备状态",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "temperature",
+          "codec": "FLOAT32"
+        },
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "powerCommand",
+      "label": "电源命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "power",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "brightnessCommand",
+      "label": "亮度命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "locateCommand",
+      "label": "定位一次命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "locate",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "capabilityId": "temperature",
+      "subscribe": {
+        "topic": "thingstalk/demo/state",
+        "qos": 1,
+        "payload": {
+          "formatId": "state",
+          "fieldId": "temperature"
+        }
+      }
+    },
+    {
+      "capabilityId": "power",
+      "subscribe": {
+        "topic": "thingstalk/demo/state",
+        "qos": 1,
+        "payload": {
+          "formatId": "state",
+          "fieldId": "power"
+        }
+      },
+      "publish": {
+        "topic": "thingstalk/demo/set/power",
+        "qos": 1,
+        "payload": {
+          "formatId": "powerCommand",
+          "fieldId": "power"
+        }
+      }
+    },
+    {
+      "capabilityId": "brightness",
+      "subscribe": {
+        "topic": "thingstalk/demo/state",
+        "qos": 1,
+        "payload": {
+          "formatId": "state",
+          "fieldId": "brightness"
+        }
+      },
+      "publish": {
+        "topic": "thingstalk/demo/set/brightness",
+        "qos": 1,
+        "payload": {
+          "formatId": "brightnessCommand",
+          "fieldId": "brightness"
+        }
+      }
+    },
+    {
+      "capabilityId": "locate",
+      "publish": {
+        "topic": "thingstalk/demo/set/locate",
+        "qos": 1,
+        "payload": {
+          "formatId": "locateCommand"
+        }
+      }
+    }
+  ]
+}
