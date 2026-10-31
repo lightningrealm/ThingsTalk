@@ -53,7 +53,11 @@ fun validatePayloadFormats(formats: List<PayloadFormat>): List<String> = buildLi
         format.fields.forEach { field ->
             val name = "$title / ${field.id}"
             issue(!payloadIdentifier.matches(field.id), "$name 的字段 ID 格式无效")
-            issue(field.codec == CodecType.HEX, "$name 仅支持数值或布尔字段")
+            issue(field.codec == CodecType.HEX, "$name 不支持 HEX 字段")
+            if (field.codec == CodecType.UTF8) {
+                issue(field.scale != 1.0 || field.bias != 0.0 || field.byteOrder != PanelByteOrder.LITTLE_ENDIAN, "文本字段不使用数值换算或字节序")
+                issue(format.encoding == PayloadEncoding.BINARY && format.fields.size != 1, "二进制 UTF-8 报文只能有一个文本字段，可设置帧头和帧尾")
+            }
             issue(!field.scale.isFinite() || field.scale == 0.0 || !field.bias.isFinite(), "$name 的倍率必须非零且换算参数必须有限")
             if (field.codec == CodecType.BOOLEAN) {
                 val no = field.falseHex.compactPanelHex()
@@ -70,7 +74,7 @@ fun validatePayloadFormats(formats: List<PayloadFormat>): List<String> = buildLi
         }
         if (format.encoding == PayloadEncoding.BINARY) {
             val size = format.prefixHex.compactPanelHex().length / 2L + format.suffixHex.compactPanelHex().length / 2L + format.fields.sumOf { it.byteWidth().toLong() }
-            issue(size !in 1L..512L, "$title 的完整二进制报文需要 1–512 字节")
+            issue((if (format.fields.any { it.codec == CodecType.UTF8 }) size + 1 else size) !in 1L..512L, "$title 的完整二进制报文需要 1–512 字节")
         }
     }
 }
@@ -99,6 +103,7 @@ internal fun validatePayloadReference(
                 CapabilityType.NUMBER -> field.codec !in numericPanelCodecs
                 CapabilityType.BOOLEAN -> field.codec != CodecType.BOOLEAN
                 CapabilityType.ACTION -> true
+                CapabilityType.TEXT -> field.codec != CodecType.UTF8
             }, "报文字段类型与组件能力不匹配：${capability.id}")
         }
     }
@@ -113,6 +118,7 @@ internal fun PayloadField.byteWidth(): Int = if (codec == CodecType.BOOLEAN) fal
 
 /** Pure numeric validation is also used for schema defaults before any transport operation. */
 internal fun payloadValueProblem(field: PayloadField, value: String): String? {
+    if (field.codec == CodecType.UTF8) return panelTextProblem(value, 512)
     if (value.length > 128) return "值不能超过 128 个字符"
     if (field.codec == CodecType.BOOLEAN) return if (value in listOf("true", "false")) null else "布尔值仅接受 true 或 false"
     if (field.codec !in numericPanelCodecs) return "不支持此字段编码"

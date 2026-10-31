@@ -27,6 +27,7 @@ fun PanelDescriptionPage(viewModel: PanelViewModel) {
                     CapabilityType.NUMBER -> tr(AppStrings.number_112789, capability.minimum ?: 0.0, capability.maximum ?: 255.0, capability.unit)
                     CapabilityType.BOOLEAN -> tr(AppStrings.boolean_a091ff)
                     CapabilityType.ACTION -> tr(AppStrings.action_d9d982)
+                    CapabilityType.TEXT -> tr(AppStrings.text_input)
                 })
                 binding?.controlTransport?.let { KeyValue(tr(AppStrings.control_channel_cdcfeb), it.name) }
                 binding?.stateTransport?.let { KeyValue(tr(AppStrings.state_source_377857), it.name) }

@@ -14,7 +14,7 @@ class MuyuProvisioningTest {
     private fun form() = SetupPanel("setup", "网络设置", "按设备说明开启设置",
         "12345678-1234-1234-1234-123456789001", "12345678-1234-1234-1234-123456789002", "12345678-1234-1234-1234-123456789003",
         listOf(SetupSection(1, "无线网络", listOf(SetupField(1, "网络名称", 1, 32), SetupField(2, "密钥", 0, 64, secret = true, rule = SetupFieldRule.WIFI_PSK)))))
-    private class Connection(val command: BleCharacteristicId = MuyuProvisioning.command, val status: BleCharacteristicId = MuyuProvisioning.status) : BleConnection {
+    internal class Connection(val command: BleCharacteristicId = MuyuProvisioning.command, val status: BleCharacteristicId = MuyuProvisioning.status) : BleConnection {
         override val state = MutableStateFlow(BleConnectionState.CONNECTED)
         var response = byteArrayOf(0xD1.toByte(),1,0x79,0,0,0,0,0,0,0,0,0,0,0)
         val writes = mutableListOf<ByteArray>()

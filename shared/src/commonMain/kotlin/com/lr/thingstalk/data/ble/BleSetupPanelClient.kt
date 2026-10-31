@@ -32,7 +32,7 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
             buildMap {
                 for (section in definition.sections) for (field in section.fields) {
                     if (field.secret) continue
-                    val saved = if (section.id == 1) status.wifiSaved else status.mqttSaved
+                    val saved = definition.isSectionSaved(status, section.id)
                     val id = definition.readId(field)
                     if (id == null) { if (!saved) put(field.id, ""); continue }
                     // Even an unconfigured field must be accessed before opening the editor:
@@ -75,6 +75,7 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
             val value = values[field.id]
             require(value != null || field.secret) { "请填写 ${field.label}" }
             if (value != null) field.validateValue(value)
+            require(!field.readOnly || value == field.defaultValue) { "固定服务参数不能修改" }
         }
         return save(sectionId, values)
     }

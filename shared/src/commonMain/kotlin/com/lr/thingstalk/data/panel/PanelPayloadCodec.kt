@@ -57,6 +57,7 @@ internal object PanelPayloadCodec {
                 format.fields.forEach { field ->
                     val text = values.getValue(field.id)
                     put(field.id, when (field.codec) {
+                        CodecType.UTF8 -> JsonPrimitive(text)
                         CodecType.BOOLEAN -> JsonPrimitive(text == "true")
                         CodecType.FLOAT32 -> JsonPrimitive(text.toDouble())
                         else -> JsonPrimitive(text.toDouble().toLong())
@@ -71,6 +72,14 @@ internal object PanelPayloadCodec {
     private fun decodeBinary(format: PayloadFormat, bytes: ByteArray): Map<String, String> {
         val prefix = hex(format.prefixHex)
         val suffix = hex(format.suffixHex)
+        if (format.fields.singleOrNull()?.codec == CodecType.UTF8) {
+            require(bytes.size >= prefix.size + suffix.size + 1) { "文本报文长度不足" }
+            require(bytes.copyOfRange(0, prefix.size).contentEquals(prefix) && bytes.copyOfRange(bytes.size - suffix.size, bytes.size).contentEquals(suffix)) { "文本报文帧头或帧尾不匹配" }
+            val text = try { bytes.copyOfRange(prefix.size, bytes.size - suffix.size).decodeToString(throwOnInvalidSequence = true) }
+            catch (_: CharacterCodingException) { throw IllegalArgumentException("文本包含无效的 Unicode 字符") }
+            panelTextProblem(text, 512)?.let { throw IllegalArgumentException(it) }
+            return mapOf(format.fields.single().id to text)
+        }
         val expectedSize = prefix.size + format.fields.sumOf { it.byteWidth() } + suffix.size
         require(bytes.size == expectedSize) { "报文长度不匹配：需要 $expectedSize 字节，实际 ${bytes.size} 字节" }
         require(bytes.copyOfRange(0, prefix.size).contentEquals(prefix)) { "报文帧头与配置不匹配" }
@@ -93,6 +102,11 @@ internal object PanelPayloadCodec {
         return format.fields.associate { field ->
             val primitive = obj[field.id] as? JsonPrimitive
                 ?: throw IllegalArgumentException("字段 ${field.id} 必须为数值或布尔值")
+            if (field.codec == CodecType.UTF8) {
+                require(primitive.isString && primitive != JsonNull) { "文本字段必须为 JSON 字符串" }
+                payloadValueProblem(field, primitive.content)?.let { throw IllegalArgumentException(it) }
+                return@associate field.id to primitive.content
+            }
             require(!primitive.isString && primitive != JsonNull) { "字段 ${field.id} 不接受字符串或 null" }
             val value = primitive.content
             if (field.codec == CodecType.BOOLEAN) require(value in listOf("true", "false")) { "字段 ${field.id} 必须为 JSON 布尔值" }
@@ -137,12 +151,13 @@ internal object PanelPayloadCodec {
                 val number = value.toDoubleOrNull()
                 require(number != null && number.isFinite() && number >= (capability.minimum ?: 0.0) && number <= (capability.maximum ?: 255.0)) { "数值超出 ${capability.label} 的允许范围" }
             }
+            CapabilityType.TEXT -> panelTextProblem(value, capability.maxBytes)?.let { throw IllegalArgumentException(it) }
             CapabilityType.ACTION -> error("动作不读取状态")
         }
     }
 
     private fun PayloadField.capability() = PanelCapability(id, id,
-        if (codec == CodecType.BOOLEAN) CapabilityType.BOOLEAN else CapabilityType.NUMBER,
+        when (codec) { CodecType.BOOLEAN -> CapabilityType.BOOLEAN; CodecType.UTF8 -> CapabilityType.TEXT; else -> CapabilityType.NUMBER },
         minimum = if (codec == CodecType.BOOLEAN) null else -Double.MAX_VALUE,
         maximum = if (codec == CodecType.BOOLEAN) null else Double.MAX_VALUE)
 

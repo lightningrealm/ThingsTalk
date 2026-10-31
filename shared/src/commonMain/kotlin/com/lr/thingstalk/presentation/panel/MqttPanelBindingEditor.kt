@@ -11,7 +11,7 @@ import com.lr.thingstalk.presentation.theme.Muted
 
 @Composable
 internal fun MqttPanelBindingEditor(capability: PanelCapability, binding: PanelBinding, formats: List<PayloadFormat>, onChange: (PanelBinding) -> Unit) {
-    if (capability.type != CapabilityType.ACTION) MqttOperationEditor(tr(AppStrings.subscribe_to_state_b8115f), capability, binding.subscribe, formats, false) { onChange(binding.copy(subscribe = it)) }
+    if (capability.type !in listOf(CapabilityType.ACTION, CapabilityType.TEXT)) MqttOperationEditor(tr(AppStrings.subscribe_to_state_b8115f), capability, binding.subscribe, formats, false) { onChange(binding.copy(subscribe = it)) }
     MqttOperationEditor(tr(AppStrings.publish_command_8863c4), capability, binding.publish, formats, true) { onChange(binding.copy(publish = it)) }
 }
 
@@ -31,7 +31,7 @@ private fun MqttOperationEditor(title: String, capability: PanelCapability, oper
             }
             val format = formats.singleOrNull { it.id == operation.payload.formatId }
             if (capability.type != CapabilityType.ACTION) {
-                val fields = format?.fields.orEmpty().filter { if (capability.type == CapabilityType.BOOLEAN) it.codec == CodecType.BOOLEAN else it.codec in numericPanelCodecs }
+                val fields = format?.fields.orEmpty().filter { when (capability.type) { CapabilityType.BOOLEAN -> it.codec == CodecType.BOOLEAN; CapabilityType.TEXT -> it.codec == CodecType.UTF8; else -> it.codec in numericPanelCodecs } }
                 PanelPicker(tr(AppStrings.widget_field_f686aa, title), fields.map { it.id to it.id }, operation.payload.fieldId.orEmpty()) {
                     onChange(operation.copy(payload = operation.payload.copy(fieldId = it)))
                 }

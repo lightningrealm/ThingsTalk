@@ -6,7 +6,7 @@ Wi-Fi 和设备端 MQTT 参数由 `setupPanels` 声明，App 不再根据木鱼 
 
 v7 保留 v6 的 `channels.ble.bindings` / `channels.mqtt.bindings`、共享 capabilities/widgets/payloadFormats，增加可选顶层 `setupPanels`。支持 BLE、MQTT、DUAL；只有 BLE/DUAL 可包含设置表单。DUAL 必须指定 defaultChannel，单通道不得指定；无绑定的一侧填写 `bindings: []`。不得出现旧顶层 bindings。导入仍走开发者设置里的原入口，保存后在设备展示页 BLE 通道显示折叠表单。编辑器可查看表单摘要，字段定义目前通过 JSON 编辑/导入，不提供表单可视化搭建器。
 
-每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。协议可省略，默认且当前唯一值为 `BLE_CHUNKED_SETTINGS_V1`。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
+每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。协议可省略，默认值为 `BLE_CHUNKED_SETTINGS_V1`；独立 AI 设置使用 `BLE_AI_SETTINGS_V1`。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
 
 sections 包含 1–2 个分组，每组 id/title/fields。协议固定分组 1（字段 1/2）、分组 2（字段 3/4/5/6），组内 ID 唯一；字段标签和顺序由配置决定。每字段包括 id、label（1–80 字符）、maxBytes（1–512），可选 minBytes（默认 0）、secret（默认 false）、readUuid、rule（默认 TEXT）。minBytes 不得大于 maxBytes。字节长度按 UTF-8 计算，所有值拒绝 NUL。
 
@@ -64,8 +64,20 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
 
 ## 设备名称默认值与空密码确认（修订 20）
 
-字段 6（设备名称，rule=IDENTIFIER）可声明 `defaultValue: "muyu-01"`。仅此字段支持默认值，不允许将 SSID、用户名或密码放进默认值。默认名称必须通过长度和标识符校验，并由配置作者保证与所有 MQTT topic 中的设备标识一致；客户端不会猜测任意 topic 的结构或自动替换 topic。
+字段 6（设备名称，rule=IDENTIFIER）可声明 `defaultValue: "muyu-01"`。网络设置协议中仅此字段支持默认值，不允许将 SSID、用户名或密码放进默认值。默认名称必须通过长度和标识符校验，并由配置作者保证与所有 MQTT topic 中的设备标识一致；客户端不会猜测任意 topic 的结构或自动替换 topic。
 
 导入时显示建议名称及主题一致性提示，不直接写入硬件。准备完成后，仅当设备报告 MQTT 分组未保存时预填默认名称；已有名称（包括空值）保留不覆盖。实际值与建议值不同时显示提醒和“使用面板建议值”按钮，用户明确选择后再保存。此字段是 v7 的新增可选扩展，需要修订 20 对应的新客户端；旧严格解析客户端可能拒绝包含 defaultValue 的配置，升级客户端后导入。未声明默认值的旧文件仍可用，但不会自动推导名称。
 
 保存前，secret 字段留空必须弹窗确认：设备报告已保存密码时说明“省略该字段并保留旧密码”；没有报告已保存时说明“本次不设置密码，需要认证的连接可能失败”。勾选清除时明确确认“发送空值清空密码”。取消返回填写，不发送配置。仅非空密码且未选择清除时可直接提交；绝不将密码内容放进弹窗或日志。保存回执更新密码是否已存标志，后续提示基于最新已知状态，最终校验仍由固件负责。
+
+## AI 设置适配器（BLE_AI_SETTINGS_V1）
+
+此适配器独立于 Wi-Fi/MQTT 配网表单，仍使用 v7 setupPanels。必须使用固件专门提供的命令、状态及读取 UUID，不得指向网络配置特征。普通组件、自由文本聊天和 MQTT 参数配置行为不变。
+
+只允许一个 section（id=1），字段 id=1 为 HTTPS Chat Completions 完整地址，id=2 为 API Key（secret=true，无 readUuid），id=3 为模型名称。字段 1/3 使用 TEXT 规则，允许非秘密 defaultValue，固件仍须验证 HTTPS 地址和字段格式；Key 禁止默认值。最大字节数由固件规定，鲸鱼示例分别为 192/192/64。
+
+复用 B1/B2/B3/B4 六字节头、14 字节 ACK 状态和 20 字节分包：BEGIN field=1；APPEND field=1/2/3；COMMIT 要求显式字段 1/3，省略字段 2 保留 Key，空字段 2 清除 Key。状态帧 version=1，bit0=物理窗口，bit3=AI 已配置，bit5=Key 已保存，其他 flags 位为 0。设置表单内部沿用通用 saved/secret 状态处理，不表示 AI 配置成了 Wi-Fi。首次准备仍通过加密 readUuid 触发配对。Key 不读回、不出现在导出面板或日志中；响应中的 Key 已存标志不能证明服务商认证成功。
+
+### Fixed provider settings
+
+`BLE_AI_SETTINGS_V1` 的非秘密字段 1/3 可声明 `readOnly: true`，必须同时提供有效 `defaultValue`。客户端仍进行加密读取以完成访问准备，但显示为说明文字并固定提交默认值，用户只编辑 Key。其他字段和网络协议禁止 readOnly。旧配置省略该字段时行为不变；旧客户端可能拒绝新字段，需使用同步更新的客户端。固件必须独立校验固定服务参数，不能信任 UI 限制。

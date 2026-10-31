@@ -42,6 +42,10 @@ internal object PanelValueCodec {
 
     fun encode(schemaVersion: Int, capability: PanelCapability, operation: BleOperationBinding, value: String): ByteArray {
         val payload = when (operation.codec) {
+            CodecType.UTF8 -> {
+                panelTextProblem(value, capability.maxBytes)?.let { throw IllegalArgumentException(it) }
+                value.encodeToByteArray(throwOnInvalidSequence = true)
+            }
             CodecType.HEX -> hex(value, 1, 512)
             CodecType.BOOLEAN -> when (value) {
                 "true" -> hex(operation.trueHex, 1, 32)

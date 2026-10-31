@@ -1,12 +1,13 @@
 # ThingsTalk 硬件开发配套 Prompt
 
-兼容快照：文档修订 26，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
+兼容快照：文档修订 30，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
 这是一份可独立发送的 Prompt，不需要访问原 App 仓库。它描述核对时的实现，不能假设之后新增功能自动可用。
 
 请为我指定的硬件能力，同时交付 BLE、MQTT 或双连接固件协议和 ThingsTalk 可导入的面板配置。按目标平台选择版本：Web 仅 MQTT 功能，推荐 v4；Android/iOS 可用 BLE v3、MQTT v4、DUAL v6（旧 v5 混合路由仍兼容）。需要 BLE 设置表单时使用 v7 setupPanels，按下文规范填写。
 先区分：普通控制面板用于日常读值和操作；设置面板 setupPanels 用于文本/密码及分组提交；App 本机 MQTT 连接配置由用户在连接库管理。
 普通组件与设置表单可在同一份设备 JSON、同一个展示页共存。不要生成 normalPanels、widget.type=SETUP 或 MQTT 设置提交等未实现结构/能力。
 先从我提供的固件/GATT/topic/需求中核实已有能力，区分事实、拟议设计和待确认事项。
+硬件接入必须使用下文已实现的 panel/widget 与设置协议。若需求需要新面板能力，严格执行“能力边界与扩展提示”：在最终输出正文明确提示“需要客户端扩展，当前不可直接使用”，说明缺口、替代方案及扩展内容；不将未支持部分混入可导入 JSON，也不静默省略需求。
 按下面的当前规范选择组件，产出完整的 `设备名.thingstalk.json`、能力到 GATT/topic/字段与双连接路由的映射表、固件收发说明和字节测试向量。
 配置中的 UUID、topic 与命令值必须与我的固件一致；下面示例只用于示范结构，不能当成我的实际设备。
 缺少关键协议时提出具体问题或标明待确认设计；不虚构App支持的组件/字段，不把未执行的测试说成通过。
@@ -15,7 +16,7 @@
 新需求若超出规范，明确列出需要的固件适配或App扩展，不通过自造JSON键绕过。
 MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地址、账号密码、Client ID 和配置 ID 不放进面板文件。
 
-我的硬件资料（由使用者补充）：芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、固件是否实现 BLE_CHUNKED_SETTINGS_V1、设置窗口/字段限制/配对要求。
+我的硬件资料（由使用者补充）：芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、固件是否实现 BLE_CHUNKED_SETTINGS_V1 / BLE_AI_SETTINGS_V1、设置窗口/字段限制/配对要求。
 
 ---
 
@@ -27,12 +28,22 @@ MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地�
 
 ## 0. 配置层次与版本选择
 
+### 能力边界与扩展提示
+
+硬件和配套配置必须从当前已实现的面板能力出发：先将每项需求映射到下表的 widget，或设置表单规范中已支持的 SetupProtocol、section/field ID 及其固定语义，再设计固件收发。允许修改实例标题、UUID、topic、受支持的报文格式，或组合现有组件生成新设备面板；这不等于新增客户端面板类型。不得仅因 JSON 可表达就宣称客户端支持。
+
+需要新的 widget、设置协议、字段语义、codec 或交互流程时，AI 必须在面向硬件开发者的最终输出正文中给出以下提示，不能只写在文件注释、内部推理或测试日志中：
+
+> **需要客户端扩展，当前不可直接使用**：需求是……；当前面板不能支持的部分是……；可用现有能力实现的替代方案及限制是……（没有则明确说明）；需要 ThingsTalk 增加……并与固件约定……。
+
+可交付已支持部分的配置，但必须明确列出未包含的需求及影响；不得静默删减需求、自造 protocol/widget/字段混入 `.thingstalk.json`，或把 Wi-Fi/MQTT 等固定设置字段重新解释为其他用途。扩展草案只放协议设计说明，明确标注“提案，尚未支持”，不作为可导入配置交付。必须在客户端实现、导入/编解码测试及本契约同步完成后，才可将扩展列为已支持；并提醒硬件开发者需要对应的新客户端版本，旧部署不会因 Skill 更新自动获得支持。
+
 App 导入的是 `设备名.thingstalk.json` 面板配置，不是协议测试向量文件。含 `configuration` 文件名引用和 `valid`/`invalid` 用例的 JSON（例如 `wire-vectors.json`）供开发与测试使用；应选择 `configuration` 指向的配置文件导入。客户端不会自动加载该引用，也不会忽略未知字段来尝试导入测试文件。
 
 | 概念 | 配置位置 | 用途与边界 |
 | --- | --- | --- |
 | 普通控制面板 | capabilities / widgets / payloadFormats + 通道绑定 | 日常状态展示和操作；BLE read/write/notify 或 MQTT publish/subscribe |
-| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；当前仅 BLE_CHUNKED_SETTINGS_V1 |
+| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；BLE_CHUNKED_SETTINGS_V1 网络设置或 BLE_AI_SETTINGS_V1 AI 设置 |
 | App 本机 MQTT 连接配置 | App 连接配置库，不放进设备 JSON | ThingsTalk 自己连接 Broker，统一 WS/WSS；与外设保存的 MQTT 参数独立 |
 
 PanelDefinition 是包含普通组件和可选设置表单的整个设备配置，两者不需要拆成两个文件。SetupPanel 不是新的 widget.type，也不通过 capabilityId 绑定；它按自己的 section/field ID 和命令/状态特征执行。配置只包含定义；SSID、账号密码等运行时输入不导出。
@@ -57,11 +68,12 @@ PanelDefinition 是包含普通组件和可选设置表单的整个设备配置�
 | SWITCH | BOOLEAN | 输入 true/false 并写入；显示真实回值 | BLE write 或 MQTT publish；推荐相应状态回报 |
 | SLIDER | NUMBER | 在范围内调整数值并提交写入 | BLE write 或 MQTT publish；minimum < maximum，范围是 step 的整数倍，1–10000 步 |
 | NUMBER_INPUT | NUMBER | 输入数值，校验后提交 | BLE write 或 MQTT publish；适合负数、小数、较大范围，实际精度由 codec 决定 |
+| TEXT_INPUT | TEXT | 一个文本输入框加发送按钮；点击才发送，原样保留空白/换行 | 仅 BLE write 或 MQTT publish，UTF8；不支持 read/notify/subscribe |
 | BUTTON | ACTION | 发送预定义完整命令，不接受动态参数 | 仅 BLE write 或 MQTT publish；不能绑定 read/notify/subscribe；命名报文所有字段都要 defaultValue |
 
 空白或未绑定组件可以保存，但不能操作硬件。发布可用硬件面板时应完成上述绑定。一个能力可被多个组件引用，例如亮度同时使用 SLIDER 和 NUMBER_INPUT；bindings 中该 capabilityId 只能出现一次。
 
-普通面板目前没有文本输入/字符串值、枚举选择、曲线、颜色选择器、布局分组、拖拽布局或自定义脚本组件。不要生成这些枚举或自造属性。枚举值虽然可以按整数传输，但 App 不提供枚举标签选择器，不能声称等价支持。
+普通面板目前没有文本状态展示/聊天记录、枚举选择、曲线、颜色选择器、布局分组、拖拽布局或自定义脚本组件。不要生成这些枚举或自造属性。枚举值虽然可以按整数传输，但 App 不提供枚举标签选择器，不能声称等价支持。
 
 ## 2. 配置对象与字段
 
@@ -78,7 +90,7 @@ PanelDefinition 是包含普通组件和可选设置表单的整个设备配置�
 }
 ```
 
-- capability：`id`, `label`, `type`, `minimum`, `maximum`, `unit`, `step`。仅 NUMBER 设置范围；默认 0～255，推荐显式提供真实范围；step 默认 1且必须有限、正数。step 不是通用数值输入的量化器。BOOLEAN/ACTION 省略范围和 step。
+- capability：`id`, `label`, `type`, `minimum`, `maximum`, `unit`, `step`, `maxBytes`。仅 NUMBER 设置范围；默认 0～255，推荐显式提供真实范围；step 默认 1且必须有限、正数。step 不是通用数值输入的量化器。BOOLEAN/ACTION/TEXT 省略范围和 step。仅 TEXT 可设置 maxBytes（1–512，默认512），按 UTF-8 字节限制输入；不包括帧头尾或 JSON 包装，完整报文仍不能超过512字节。
 - widget：`id`, `type`, `label`, `capabilityId`。数组顺序就是展示顺序。
 - BLE binding：`capabilityId`, 可选 `read`, `write`, `notify`, 可选旧格式 `actionValue`。MQTT 使用 publish/subscribe；DUAL v5 可同时包含两者并显式指定路由，v6/v7 则按 channels.ble/channels.mqtt 分区，字段见 MQTT/双连接规范。存在 binding 时至少有一种操作。
 - format：`id`, `label`, `encoding`（BINARY 默认或 JSON）, `fields`, `prefixHex`, `suffixHex`（默认空）。
@@ -130,13 +142,21 @@ read/notify 不设置非默认 writeMode。启用 payload 引用后，操作对�
 
 ### JSON
 
-字段 ID 对应顶层键，值仅数值/布尔。例如 `{"temperature":25.5,"power":true}`。必须包含所有声明字段，不能增加字段；拒绝重复键、字符串数字、null、数组、嵌套对象、非法UTF-8。JSON不使用帧头尾、大小端、scale/bias、自定义布尔字节；这些参数保持默认。整数 codec 仍限定整数与范围，FLOAT32 可用小数且需满足其数值范围；JSON输出是文本数值，不能按二进制 FLOAT32 字节理解。
+字段 ID 对应顶层键，值为数值/布尔，或 codec=UTF8 对应的 JSON 字符串。例如 `{"temperature":25.5,"power":true}`。必须包含所有声明字段，不能增加字段；拒绝重复键、字符串数字、null、数组、嵌套对象、非法UTF-8。JSON不使用帧头尾、大小端、scale/bias、自定义布尔字节；这些参数保持默认。整数 codec 仍限定整数与范围，FLOAT32 可用小数且需满足其数值范围；JSON输出是文本数值，不能按二进制 FLOAT32 字节理解。
 
 ### 写入与动作
 
 属性写入时，所绑定 fieldId 使用用户输入，其他字段全部使用显式 defaultValue。defaultValue 是工程值字符串，例如 `"2"`, `"12.5"`, `"true"`，不是裸数字、裸布尔或HEX。App不会把其他组件最新值拼进命令；固件不应将模板中的默认值误当作用户对其他属性的新设置。
 
 ACTION 使用独立能力与 BUTTON，只有 BLE write 或 MQTT publish，payload 只填 formatId，格式所有字段具有默认值；不同时设置 actionValue。动作执行后的状态反馈通过另一 NUMBER/BOOLEAN 能力的 read/notify 或 subscribe 呈现。旧的固定动作可使用 `codec:"HEX"` 与 binding.actionValue，但新硬件优先使用可解释的命名格式。
+
+### 普通文本输入（修订 30）
+
+TEXT_INPUT + TEXT 需要 schemaVersion ≥3，BLE 推荐 v3、MQTT v4、双连接 v6，含设置表单则 v7；需要支持修订 30 的新客户端，旧客户端无法解析新增枚举。编辑器可直接添加文本输入组件、设置 maxBytes，并配置发送绑定。输入草稿只保留在当前组件内，不写入面板配置；重组或操作失败不清空输入，发送成功也不自动清空。普通文本可能出现在 BLE/MQTT 调试日志中，不用于 API Key 或密码；凭据继续使用相应 SetupPanel。
+
+BLE 可直接使用 `codec:"UTF8"`，发送原始 UTF-8 字节，可配置 writePrefixHex/writeSuffixHex；无自动 NUL 结尾、换行、长度字段、校验和或分包。若引用命名格式，BINARY 只允许一个 UTF8 字段，可有 prefixHex/suffixHex，禁止与其他字段混排。JSON 可以在数值/布尔字段之外增加 UTF8 字符串字段，客户端负责 JSON 转义；仍为严格平面对象。MQTT 必须引用命名报文格式和 fieldId，BINARY 用于原始 UTF-8，JSON 用于字符串字段。其他命令字段须有 defaultValue。
+
+输入不自动 trim、不截断，拒绝空字符串、NUL、非法 Unicode 和超出 maxBytes 的文本；中文/emoji 按 UTF-8 字节计算。完整发送报文仍为1–512字节，BLE 还检查当前连接最大写入长度，超限拒绝而不拆包。文本组件仅发送，不建立文本状态订阅、不做请求与回复匹配、不自动重发；界面的完成提示只确认传输层执行完成，不证明硬件业务成功。需要显示回复或长文本分包时必须按“能力边界与扩展提示”说明当前缺口。
 
 ## 5. 长度、语义与当前边界
 
@@ -148,13 +168,13 @@ GATT发现不携带本配置格式的自动安装约定。当前发布方式是�
 
 ## 6. 示例的固件约定与验收
 
-`assets/all-widgets.thingstalk.json` 使用示例服务 FFF0，状态特征 FFF1（READ/NOTIFY）、命令特征 FFF2（WRITE）。发布到实际产品前须确认或替换这些 UUID。
+`assets/all-widgets.thingstalk.json` 使用示例服务 FFF0，状态特征 FFF1（READ/NOTIFY）、命令特征 FFF2（WRITE）、文本特征 FFF4（WRITE，原始 UTF-8，最多64字节并受连接写入长度限制）。发布到实际产品前须确认或替换这些 UUID。
 
 - 状态：`AA + temperature INT16 LE ×0.01 + power BOOL + brightness UINT8 + 55`。
 - 设置电源：`A1 02 + power BOOL + EE`；只更改电源。
 - 设置亮度：`A1 03 + brightness UINT8 + EE`；只更改亮度。
 - 定位动作：`A1 04 01 EE`；执行一次定位动作，duration=1 的单位由此示例约定为秒。
-- 温度用 VALUE；电源用 SWITCH；亮度用 SLIDER 与 NUMBER_INPUT；定位用 BUTTON，共五种组件。
+- 温度用 VALUE；电源用 SWITCH；亮度用 SLIDER 与 NUMBER_INPUT；定位用 BUTTON；文本发送用 TEXT_INPUT，共六种组件。
 - 固件须对未知命令/长度/范围拒绝或忽略，并在配套文档说明。示例不表示某块现有硬件已经实现它。
 
 验收至少包括：配置导入成功、初始读回、同帧多个字段通知更新、开关两个方向、亮度最小/最大与非整数拒绝、定位动作、畸形帧、断开/重连。对照 wire-vectors.json 逐字节核对；实际硬件验收由开发者执行并记录结果。
@@ -217,8 +237,8 @@ Android 文件导入不依赖文件管理器提供正确的 MIME 类型，选中
 - operation 字段仅 topic、payload、qos（默认 0）、retain（默认 false）。支持 QoS 0/1/2；同一状态 topic 必须使用相同订阅 QoS。
 - 面板 topic 必须精确、非空，不含 NUL、`+`、`#`、代理码点，不以 `$share/` 开头，UTF-8 长度不超过 65535 字节。大小写及路径须与固件一致。工作台的通配订阅能力不代表面板也支持。
 - publish 固定非 retained；subscribe 不需要配置 retain。任何操作写 retain:true 均拒绝。Broker 已保留的状态消息可以接收。
-- BOOLEAN/NUMBER 选择有效 fieldId；ACTION 只能 publish，payload 仅 formatId，不能 subscribe。ACTION 全部字段必须有 defaultValue，属性发布时其他字段必须有 defaultValue。不会自动合并最新状态到命令。
-- BINARY/JSON 与 BLE 共用编解码约束，完整报文 1–512 字节。JSON 是严格平面数值/布尔对象，不能多键、漏键、嵌套或使用字符串值。
+- BOOLEAN/NUMBER/TEXT 选择有效 fieldId；TEXT 仅 publish，绑定 UTF8 字段，不支持 subscribe；ACTION 只能 publish，payload 仅 formatId，不能 subscribe。ACTION 全部字段必须有 defaultValue，属性发布时其他字段必须有 defaultValue。不会自动合并最新状态到命令。
+- BINARY/JSON 与 BLE 共用编解码约束，完整报文 1–512 字节。JSON 是严格平面数值/布尔/UTF8 字符串对象，不能多键、漏键或嵌套。BINARY 的 UTF8 格式只能有一个文本字段，可设置帧头尾。
 - 没有通用 read 请求或自动请求/应答匹配。设备主动 publish 状态，App subscribe 更新显示；发送成功不乐观修改状态。QoS 确认不等于设备业务成功。固件应说明重复消息的幂等处理，特别是有副作用的动作。
 
 示例协议（须替换为实际设备 topic）：向 `thingstalk/demo/state` 发布 `{"temperature":25.0,"power":true,"brightness":80}`；关闭电源命令为 `thingstalk/demo/set/power` + `{"power":false}`，亮度 50 为 `thingstalk/demo/set/brightness` + `{"brightness":50}`，定位为 `thingstalk/demo/set/locate` + `{"locate":true}`。数值边界、缺失/额外字段及错误类型需纳入验收。
@@ -294,7 +314,7 @@ Wi-Fi 和设备端 MQTT 参数由 `setupPanels` 声明，App 不再根据木鱼 
 
 v7 保留 v6 的 `channels.ble.bindings` / `channels.mqtt.bindings`、共享 capabilities/widgets/payloadFormats，增加可选顶层 `setupPanels`。支持 BLE、MQTT、DUAL；只有 BLE/DUAL 可包含设置表单。DUAL 必须指定 defaultChannel，单通道不得指定；无绑定的一侧填写 `bindings: []`。不得出现旧顶层 bindings。导入仍走开发者设置里的原入口，保存后在设备展示页 BLE 通道显示折叠表单。编辑器可查看表单摘要，字段定义目前通过 JSON 编辑/导入，不提供表单可视化搭建器。
 
-每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。协议可省略，默认且当前唯一值为 `BLE_CHUNKED_SETTINGS_V1`。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
+每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。协议可省略，默认值为 `BLE_CHUNKED_SETTINGS_V1`；独立 AI 设置使用 `BLE_AI_SETTINGS_V1`。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
 
 sections 包含 1–2 个分组，每组 id/title/fields。协议固定分组 1（字段 1/2）、分组 2（字段 3/4/5/6），组内 ID 唯一；字段标签和顺序由配置决定。每字段包括 id、label（1–80 字符）、maxBytes（1–512），可选 minBytes（默认 0）、secret（默认 false）、readUuid、rule（默认 TEXT）。minBytes 不得大于 maxBytes。字节长度按 UTF-8 计算，所有值拒绝 NUL。
 
@@ -352,14 +372,26 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
 
 ## 设备名称默认值与空密码确认（修订 20）
 
-字段 6（设备名称，rule=IDENTIFIER）可声明 `defaultValue: "muyu-01"`。仅此字段支持默认值，不允许将 SSID、用户名或密码放进默认值。默认名称必须通过长度和标识符校验，并由配置作者保证与所有 MQTT topic 中的设备标识一致；客户端不会猜测任意 topic 的结构或自动替换 topic。
+字段 6（设备名称，rule=IDENTIFIER）可声明 `defaultValue: "muyu-01"`。网络设置协议中仅此字段支持默认值，不允许将 SSID、用户名或密码放进默认值。默认名称必须通过长度和标识符校验，并由配置作者保证与所有 MQTT topic 中的设备标识一致；客户端不会猜测任意 topic 的结构或自动替换 topic。
 
 导入时显示建议名称及主题一致性提示，不直接写入硬件。准备完成后，仅当设备报告 MQTT 分组未保存时预填默认名称；已有名称（包括空值）保留不覆盖。实际值与建议值不同时显示提醒和“使用面板建议值”按钮，用户明确选择后再保存。此字段是 v7 的新增可选扩展，需要修订 20 对应的新客户端；旧严格解析客户端可能拒绝包含 defaultValue 的配置，升级客户端后导入。未声明默认值的旧文件仍可用，但不会自动推导名称。
 
 保存前，secret 字段留空必须弹窗确认：设备报告已保存密码时说明“省略该字段并保留旧密码”；没有报告已保存时说明“本次不设置密码，需要认证的连接可能失败”。勾选清除时明确确认“发送空值清空密码”。取消返回填写，不发送配置。仅非空密码且未选择清除时可直接提交；绝不将密码内容放进弹窗或日志。保存回执更新密码是否已存标志，后续提示基于最新已知状态，最终校验仍由固件负责。
 
+## AI 设置适配器（BLE_AI_SETTINGS_V1）
 
-## BLE 五组件完整可导入示例
+此适配器独立于 Wi-Fi/MQTT 配网表单，仍使用 v7 setupPanels。必须使用固件专门提供的命令、状态及读取 UUID，不得指向网络配置特征。普通组件、自由文本聊天和 MQTT 参数配置行为不变。
+
+只允许一个 section（id=1），字段 id=1 为 HTTPS Chat Completions 完整地址，id=2 为 API Key（secret=true，无 readUuid），id=3 为模型名称。字段 1/3 使用 TEXT 规则，允许非秘密 defaultValue，固件仍须验证 HTTPS 地址和字段格式；Key 禁止默认值。最大字节数由固件规定，鲸鱼示例分别为 192/192/64。
+
+复用 B1/B2/B3/B4 六字节头、14 字节 ACK 状态和 20 字节分包：BEGIN field=1；APPEND field=1/2/3；COMMIT 要求显式字段 1/3，省略字段 2 保留 Key，空字段 2 清除 Key。状态帧 version=1，bit0=物理窗口，bit3=AI 已配置，bit5=Key 已保存，其他 flags 位为 0。设置表单内部沿用通用 saved/secret 状态处理，不表示 AI 配置成了 Wi-Fi。首次准备仍通过加密 readUuid 触发配对。Key 不读回、不出现在导出面板或日志中；响应中的 Key 已存标志不能证明服务商认证成功。
+
+### Fixed provider settings
+
+`BLE_AI_SETTINGS_V1` 的非秘密字段 1/3 可声明 `readOnly: true`，必须同时提供有效 `defaultValue`。客户端仍进行加密读取以完成访问准备，但显示为说明文字并固定提交默认值，用户只编辑 Key。其他字段和网络协议禁止 readOnly。旧配置省略该字段时行为不变；旧客户端可能拒绝新字段，需使用同步更新的客户端。固件必须独立校验固定服务参数，不能信任 UI 限制。
+
+
+## BLE 六组件完整可导入示例
 
 ```json
 {
@@ -472,6 +504,12 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "locate",
       "label": "定位一次",
       "type": "ACTION"
+    },
+    {
+      "id": "message",
+      "label": "发送文本",
+      "type": "TEXT",
+      "maxBytes": 64
     }
   ],
   "bindings": [
@@ -557,6 +595,14 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
           "formatId": "locate"
         }
       }
+    },
+    {
+      "capabilityId": "message",
+      "write": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff4-0000-1000-8000-00805f9b34fb",
+        "codec": "UTF8"
+      }
     }
   ],
   "widgets": [
@@ -589,6 +635,12 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "type": "BUTTON",
       "label": "定位一次",
       "capabilityId": "locate"
+    },
+    {
+      "id": "messageInput",
+      "type": "TEXT_INPUT",
+      "label": "发送文本",
+      "capabilityId": "message"
     }
   ]
 }
@@ -698,7 +750,7 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
 }
 ```
 
-## MQTT 五组件完整示例
+## MQTT 六组件完整示例
 
 ```json
 {
@@ -732,6 +784,12 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "locate",
       "label": "定位一次",
       "type": "ACTION"
+    },
+    {
+      "id": "message",
+      "label": "发送文本",
+      "type": "TEXT",
+      "maxBytes": 64
     }
   ],
   "widgets": [
@@ -764,6 +822,12 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "type": "BUTTON",
       "label": "定位一次",
       "capabilityId": "locate"
+    },
+    {
+      "id": "messageInput",
+      "type": "TEXT_INPUT",
+      "label": "发送文本",
+      "capabilityId": "message"
     }
   ],
   "payloadFormats": [
@@ -817,6 +881,17 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
           "id": "locate",
           "codec": "BOOLEAN",
           "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "messageCommand",
+      "label": "文本命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "text",
+          "codec": "UTF8"
         }
       ]
     }
@@ -878,6 +953,16 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
         "qos": 1,
         "payload": {
           "formatId": "locateCommand"
+        }
+      }
+    },
+    {
+      "capabilityId": "message",
+      "publish": {
+        "topic": "thingstalk/lamp-01/message",
+        "payload": {
+          "formatId": "messageCommand",
+          "fieldId": "text"
         }
       }
     }
@@ -1164,6 +1249,937 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
               "readUuid": "5c52a00a-7d8a-4b19-9c63-414950415353",
               "rule": "IDENTIFIER",
               "defaultValue": "muyu-01"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## v7 AI 设置表单示例
+
+```json
+{
+  "schemaVersion": 7,
+  "title": "蓝色大肥鱼",
+  "transport": "DUAL",
+  "defaultChannel": "BLE",
+  "payloadFormats": [
+    {
+      "id": "status",
+      "label": "蓝色大肥鱼状态",
+      "prefixHex": "AA",
+      "suffixHex": "55",
+      "fields": [
+        {
+          "id": "request",
+          "codec": "UINT32"
+        },
+        {
+          "id": "busy",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mood",
+          "codec": "UINT8"
+        },
+        {
+          "id": "contextBytes",
+          "codec": "UINT16"
+        },
+        {
+          "id": "error",
+          "codec": "UINT8"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "brightness",
+      "label": "屏幕亮度",
+      "fields": [
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "label": "网络连接",
+      "fields": [
+        {
+          "id": "wifi",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mqtt",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "mqttState",
+      "label": "MQTT 状态",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "request",
+          "codec": "UINT32"
+        },
+        {
+          "id": "busy",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mood",
+          "codec": "UINT8"
+        },
+        {
+          "id": "contextBytes",
+          "codec": "UINT16"
+        },
+        {
+          "id": "error",
+          "codec": "UINT8"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "greetCommand",
+      "label": "打个招呼",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "1"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "greetMqtt",
+      "label": "打个招呼 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "greet",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "jokeCommand",
+      "label": "讲个笑话",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "2"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "jokeMqtt",
+      "label": "讲个笑话 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "joke",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "encourageCommand",
+      "label": "鼓励我",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "3"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "encourageMqtt",
+      "label": "鼓励我 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "encourage",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "continueCommand",
+      "label": "继续聊",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "4"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "continueMqtt",
+      "label": "继续聊 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "continue",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "compressCommand",
+      "label": "整理记忆",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "5"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "compressMqtt",
+      "label": "整理记忆 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "compress",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "forgetCommand",
+      "label": "清空记忆",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "6"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "forgetMqtt",
+      "label": "清空记忆 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "forget",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "request",
+      "label": "请求编号",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "step": 1
+    },
+    {
+      "id": "busy",
+      "label": "正在思考",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "contextBytes",
+      "label": "记忆占用",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 10000,
+      "step": 1,
+      "unit": "B"
+    },
+    {
+      "id": "error",
+      "label": "请求错误（0 正常）",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 7,
+      "step": 1
+    },
+    {
+      "id": "battery",
+      "label": "电量",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 100,
+      "step": 1
+    },
+    {
+      "id": "brightness",
+      "label": "屏幕亮度",
+      "type": "NUMBER",
+      "minimum": 10,
+      "maximum": 100,
+      "step": 1
+    },
+    {
+      "id": "wifi",
+      "label": "Wi-Fi 已连接",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "mqtt",
+      "label": "MQTT 已就绪",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "greet",
+      "label": "打个招呼",
+      "type": "ACTION"
+    },
+    {
+      "id": "joke",
+      "label": "讲个笑话",
+      "type": "ACTION"
+    },
+    {
+      "id": "encourage",
+      "label": "鼓励我",
+      "type": "ACTION"
+    },
+    {
+      "id": "continue",
+      "label": "继续聊",
+      "type": "ACTION"
+    },
+    {
+      "id": "compress",
+      "label": "整理记忆",
+      "type": "ACTION"
+    },
+    {
+      "id": "forget",
+      "label": "清空记忆",
+      "type": "ACTION"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "requestCard",
+      "label": "请求编号",
+      "type": "VALUE",
+      "capabilityId": "request"
+    },
+    {
+      "id": "busyCard",
+      "label": "正在思考",
+      "type": "VALUE",
+      "capabilityId": "busy"
+    },
+    {
+      "id": "contextBytesCard",
+      "label": "记忆占用",
+      "type": "VALUE",
+      "capabilityId": "contextBytes"
+    },
+    {
+      "id": "errorCard",
+      "label": "请求错误（0 正常）",
+      "type": "VALUE",
+      "capabilityId": "error"
+    },
+    {
+      "id": "batteryCard",
+      "label": "电量",
+      "type": "VALUE",
+      "capabilityId": "battery"
+    },
+    {
+      "id": "brightnessCard",
+      "label": "屏幕亮度",
+      "type": "SLIDER",
+      "capabilityId": "brightness"
+    },
+    {
+      "id": "wifiCard",
+      "label": "Wi-Fi 已连接",
+      "type": "VALUE",
+      "capabilityId": "wifi"
+    },
+    {
+      "id": "mqttCard",
+      "label": "MQTT 已就绪",
+      "type": "VALUE",
+      "capabilityId": "mqtt"
+    },
+    {
+      "id": "greetButton",
+      "label": "打个招呼",
+      "type": "BUTTON",
+      "capabilityId": "greet"
+    },
+    {
+      "id": "jokeButton",
+      "label": "讲个笑话",
+      "type": "BUTTON",
+      "capabilityId": "joke"
+    },
+    {
+      "id": "encourageButton",
+      "label": "鼓励我",
+      "type": "BUTTON",
+      "capabilityId": "encourage"
+    },
+    {
+      "id": "continueButton",
+      "label": "继续聊",
+      "type": "BUTTON",
+      "capabilityId": "continue"
+    },
+    {
+      "id": "compressButton",
+      "label": "整理记忆",
+      "type": "BUTTON",
+      "capabilityId": "compress"
+    },
+    {
+      "id": "forgetButton",
+      "label": "清空记忆",
+      "type": "BUTTON",
+      "capabilityId": "forget"
+    }
+  ],
+  "channels": {
+    "ble": {
+      "bindings": [
+        {
+          "capabilityId": "request",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "request"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "request"
+            }
+          }
+        },
+        {
+          "capabilityId": "busy",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "busy"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "busy"
+            }
+          }
+        },
+        {
+          "capabilityId": "contextBytes",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "contextBytes"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "contextBytes"
+            }
+          }
+        },
+        {
+          "capabilityId": "error",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "error"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "error"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "brightness",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          }
+        },
+        {
+          "capabilityId": "wifi",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "wifi"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "wifi"
+            }
+          }
+        },
+        {
+          "capabilityId": "mqtt",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "mqtt"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "mqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "greet",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "greetCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "joke",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "jokeCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "encourage",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "encourageCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "continue",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "continueCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "compress",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "compressCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "forget",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "forgetCommand"
+            }
+          }
+        }
+      ]
+    },
+    "mqtt": {
+      "bindings": [
+        {
+          "capabilityId": "request",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "request"
+            }
+          }
+        },
+        {
+          "capabilityId": "busy",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "busy"
+            }
+          }
+        },
+        {
+          "capabilityId": "contextBytes",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "contextBytes"
+            }
+          }
+        },
+        {
+          "capabilityId": "error",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "error"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "greet",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/greet",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "greetMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "joke",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/joke",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "jokeMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "encourage",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/encourage",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "encourageMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "continue",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/continue",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "continueMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "compress",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/compress",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "compressMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "forget",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/forget",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "forgetMqtt"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "setupPanels": [
+    {
+      "id": "wifiSetup",
+      "title": "Wi-Fi 设置",
+      "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "Wi-Fi",
+          "fields": [
+            {
+              "id": 1,
+              "label": "SSID",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c53a007-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 2,
+              "label": "Wi-Fi 密码",
+              "maxBytes": 64,
+              "secret": true,
+              "rule": "WIFI_PSK"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mqttSetup",
+      "title": "MQTT 设置",
+      "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 2,
+          "title": "MQTT",
+          "fields": [
+            {
+              "id": 3,
+              "label": "Broker URI",
+              "maxBytes": 192,
+              "minBytes": 1,
+              "readUuid": "5c53a008-7d8a-4b19-9c63-414950415353",
+              "rule": "MQTT_URI"
+            },
+            {
+              "id": 4,
+              "label": "用户名",
+              "maxBytes": 64,
+              "readUuid": "5c53a009-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 5,
+              "label": "MQTT 密码",
+              "maxBytes": 128,
+              "secret": true
+            },
+            {
+              "id": 6,
+              "label": "设备名称",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c53a00a-7d8a-4b19-9c63-414950415353",
+              "rule": "IDENTIFIER",
+              "defaultValue": "whale-01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aiSetup",
+      "title": "DeepSeek API Key",
+      "instructions": "长按硬件 UP 开启设置窗口并完成配对。只需填写 DeepSeek 官方 API Key；接口、模型由固件固定。保存后不会自动发起付费请求。",
+      "protocol": "BLE_AI_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a00c-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a00d-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "AI",
+          "fields": [
+            {
+              "id": 1,
+              "label": "HTTPS 完整接口地址",
+              "minBytes": 1,
+              "maxBytes": 192,
+              "readUuid": "5c53a00e-7d8a-4b19-9c63-414950415353",
+              "defaultValue": "https://api.deepseek.com/chat/completions",
+              "readOnly": true
+            },
+            {
+              "id": 2,
+              "label": "API Key",
+              "maxBytes": 192,
+              "secret": true
+            },
+            {
+              "id": 3,
+              "label": "模型名称",
+              "minBytes": 1,
+              "maxBytes": 64,
+              "readUuid": "5c53a00f-7d8a-4b19-9c63-414950415353",
+              "defaultValue": "deepseek-flash",
+              "readOnly": true
             }
           ]
         }

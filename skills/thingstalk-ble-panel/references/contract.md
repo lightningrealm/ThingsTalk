@@ -6,12 +6,22 @@
 
 ## 0. 配置层次与版本选择
 
+### 能力边界与扩展提示
+
+硬件和配套配置必须从当前已实现的面板能力出发：先将每项需求映射到下表的 widget，或设置表单规范中已支持的 SetupProtocol、section/field ID 及其固定语义，再设计固件收发。允许修改实例标题、UUID、topic、受支持的报文格式，或组合现有组件生成新设备面板；这不等于新增客户端面板类型。不得仅因 JSON 可表达就宣称客户端支持。
+
+需要新的 widget、设置协议、字段语义、codec 或交互流程时，AI 必须在面向硬件开发者的最终输出正文中给出以下提示，不能只写在文件注释、内部推理或测试日志中：
+
+> **需要客户端扩展，当前不可直接使用**：需求是……；当前面板不能支持的部分是……；可用现有能力实现的替代方案及限制是……（没有则明确说明）；需要 ThingsTalk 增加……并与固件约定……。
+
+可交付已支持部分的配置，但必须明确列出未包含的需求及影响；不得静默删减需求、自造 protocol/widget/字段混入 `.thingstalk.json`，或把 Wi-Fi/MQTT 等固定设置字段重新解释为其他用途。扩展草案只放协议设计说明，明确标注“提案，尚未支持”，不作为可导入配置交付。必须在客户端实现、导入/编解码测试及本契约同步完成后，才可将扩展列为已支持；并提醒硬件开发者需要对应的新客户端版本，旧部署不会因 Skill 更新自动获得支持。
+
 App 导入的是 `设备名.thingstalk.json` 面板配置，不是协议测试向量文件。含 `configuration` 文件名引用和 `valid`/`invalid` 用例的 JSON（例如 `wire-vectors.json`）供开发与测试使用；应选择 `configuration` 指向的配置文件导入。客户端不会自动加载该引用，也不会忽略未知字段来尝试导入测试文件。
 
 | 概念 | 配置位置 | 用途与边界 |
 | --- | --- | --- |
 | 普通控制面板 | capabilities / widgets / payloadFormats + 通道绑定 | 日常状态展示和操作；BLE read/write/notify 或 MQTT publish/subscribe |
-| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；当前仅 BLE_CHUNKED_SETTINGS_V1 |
+| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；BLE_CHUNKED_SETTINGS_V1 网络设置或 BLE_AI_SETTINGS_V1 AI 设置 |
 | App 本机 MQTT 连接配置 | App 连接配置库，不放进设备 JSON | ThingsTalk 自己连接 Broker，统一 WS/WSS；与外设保存的 MQTT 参数独立 |
 
 PanelDefinition 是包含普通组件和可选设置表单的整个设备配置，两者不需要拆成两个文件。SetupPanel 不是新的 widget.type，也不通过 capabilityId 绑定；它按自己的 section/field ID 和命令/状态特征执行。配置只包含定义；SSID、账号密码等运行时输入不导出。
@@ -36,11 +46,12 @@ PanelDefinition 是包含普通组件和可选设置表单的整个设备配置�
 | SWITCH | BOOLEAN | 输入 true/false 并写入；显示真实回值 | BLE write 或 MQTT publish；推荐相应状态回报 |
 | SLIDER | NUMBER | 在范围内调整数值并提交写入 | BLE write 或 MQTT publish；minimum < maximum，范围是 step 的整数倍，1–10000 步 |
 | NUMBER_INPUT | NUMBER | 输入数值，校验后提交 | BLE write 或 MQTT publish；适合负数、小数、较大范围，实际精度由 codec 决定 |
+| TEXT_INPUT | TEXT | 一个文本输入框加发送按钮；点击才发送，原样保留空白/换行 | 仅 BLE write 或 MQTT publish，UTF8；不支持 read/notify/subscribe |
 | BUTTON | ACTION | 发送预定义完整命令，不接受动态参数 | 仅 BLE write 或 MQTT publish；不能绑定 read/notify/subscribe；命名报文所有字段都要 defaultValue |
 
 空白或未绑定组件可以保存，但不能操作硬件。发布可用硬件面板时应完成上述绑定。一个能力可被多个组件引用，例如亮度同时使用 SLIDER 和 NUMBER_INPUT；bindings 中该 capabilityId 只能出现一次。
 
-普通面板目前没有文本输入/字符串值、枚举选择、曲线、颜色选择器、布局分组、拖拽布局或自定义脚本组件。不要生成这些枚举或自造属性。枚举值虽然可以按整数传输，但 App 不提供枚举标签选择器，不能声称等价支持。
+普通面板目前没有文本状态展示/聊天记录、枚举选择、曲线、颜色选择器、布局分组、拖拽布局或自定义脚本组件。不要生成这些枚举或自造属性。枚举值虽然可以按整数传输，但 App 不提供枚举标签选择器，不能声称等价支持。
 
 ## 2. 配置对象与字段
 
@@ -57,7 +68,7 @@ PanelDefinition 是包含普通组件和可选设置表单的整个设备配置�
 }
 ```
 
-- capability：`id`, `label`, `type`, `minimum`, `maximum`, `unit`, `step`。仅 NUMBER 设置范围；默认 0～255，推荐显式提供真实范围；step 默认 1且必须有限、正数。step 不是通用数值输入的量化器。BOOLEAN/ACTION 省略范围和 step。
+- capability：`id`, `label`, `type`, `minimum`, `maximum`, `unit`, `step`, `maxBytes`。仅 NUMBER 设置范围；默认 0～255，推荐显式提供真实范围；step 默认 1且必须有限、正数。step 不是通用数值输入的量化器。BOOLEAN/ACTION/TEXT 省略范围和 step。仅 TEXT 可设置 maxBytes（1–512，默认512），按 UTF-8 字节限制输入；不包括帧头尾或 JSON 包装，完整报文仍不能超过512字节。
 - widget：`id`, `type`, `label`, `capabilityId`。数组顺序就是展示顺序。
 - BLE binding：`capabilityId`, 可选 `read`, `write`, `notify`, 可选旧格式 `actionValue`。MQTT 使用 publish/subscribe；DUAL v5 可同时包含两者并显式指定路由，v6/v7 则按 channels.ble/channels.mqtt 分区，字段见 MQTT/双连接规范。存在 binding 时至少有一种操作。
 - format：`id`, `label`, `encoding`（BINARY 默认或 JSON）, `fields`, `prefixHex`, `suffixHex`（默认空）。
@@ -109,13 +120,21 @@ read/notify 不设置非默认 writeMode。启用 payload 引用后，操作对�
 
 ### JSON
 
-字段 ID 对应顶层键，值仅数值/布尔。例如 `{"temperature":25.5,"power":true}`。必须包含所有声明字段，不能增加字段；拒绝重复键、字符串数字、null、数组、嵌套对象、非法UTF-8。JSON不使用帧头尾、大小端、scale/bias、自定义布尔字节；这些参数保持默认。整数 codec 仍限定整数与范围，FLOAT32 可用小数且需满足其数值范围；JSON输出是文本数值，不能按二进制 FLOAT32 字节理解。
+字段 ID 对应顶层键，值为数值/布尔，或 codec=UTF8 对应的 JSON 字符串。例如 `{"temperature":25.5,"power":true}`。必须包含所有声明字段，不能增加字段；拒绝重复键、字符串数字、null、数组、嵌套对象、非法UTF-8。JSON不使用帧头尾、大小端、scale/bias、自定义布尔字节；这些参数保持默认。整数 codec 仍限定整数与范围，FLOAT32 可用小数且需满足其数值范围；JSON输出是文本数值，不能按二进制 FLOAT32 字节理解。
 
 ### 写入与动作
 
 属性写入时，所绑定 fieldId 使用用户输入，其他字段全部使用显式 defaultValue。defaultValue 是工程值字符串，例如 `"2"`, `"12.5"`, `"true"`，不是裸数字、裸布尔或HEX。App不会把其他组件最新值拼进命令；固件不应将模板中的默认值误当作用户对其他属性的新设置。
 
 ACTION 使用独立能力与 BUTTON，只有 BLE write 或 MQTT publish，payload 只填 formatId，格式所有字段具有默认值；不同时设置 actionValue。动作执行后的状态反馈通过另一 NUMBER/BOOLEAN 能力的 read/notify 或 subscribe 呈现。旧的固定动作可使用 `codec:"HEX"` 与 binding.actionValue，但新硬件优先使用可解释的命名格式。
+
+### 普通文本输入（修订 30）
+
+TEXT_INPUT + TEXT 需要 schemaVersion ≥3，BLE 推荐 v3、MQTT v4、双连接 v6，含设置表单则 v7；需要支持修订 30 的新客户端，旧客户端无法解析新增枚举。编辑器可直接添加文本输入组件、设置 maxBytes，并配置发送绑定。输入草稿只保留在当前组件内，不写入面板配置；重组或操作失败不清空输入，发送成功也不自动清空。普通文本可能出现在 BLE/MQTT 调试日志中，不用于 API Key 或密码；凭据继续使用相应 SetupPanel。
+
+BLE 可直接使用 `codec:"UTF8"`，发送原始 UTF-8 字节，可配置 writePrefixHex/writeSuffixHex；无自动 NUL 结尾、换行、长度字段、校验和或分包。若引用命名格式，BINARY 只允许一个 UTF8 字段，可有 prefixHex/suffixHex，禁止与其他字段混排。JSON 可以在数值/布尔字段之外增加 UTF8 字符串字段，客户端负责 JSON 转义；仍为严格平面对象。MQTT 必须引用命名报文格式和 fieldId，BINARY 用于原始 UTF-8，JSON 用于字符串字段。其他命令字段须有 defaultValue。
+
+输入不自动 trim、不截断，拒绝空字符串、NUL、非法 Unicode 和超出 maxBytes 的文本；中文/emoji 按 UTF-8 字节计算。完整发送报文仍为1–512字节，BLE 还检查当前连接最大写入长度，超限拒绝而不拆包。文本组件仅发送，不建立文本状态订阅、不做请求与回复匹配、不自动重发；界面的完成提示只确认传输层执行完成，不证明硬件业务成功。需要显示回复或长文本分包时必须按“能力边界与扩展提示”说明当前缺口。
 
 ## 5. 长度、语义与当前边界
 
@@ -127,13 +146,13 @@ GATT发现不携带本配置格式的自动安装约定。当前发布方式是�
 
 ## 6. 示例的固件约定与验收
 
-`assets/all-widgets.thingstalk.json` 使用示例服务 FFF0，状态特征 FFF1（READ/NOTIFY）、命令特征 FFF2（WRITE）。发布到实际产品前须确认或替换这些 UUID。
+`assets/all-widgets.thingstalk.json` 使用示例服务 FFF0，状态特征 FFF1（READ/NOTIFY）、命令特征 FFF2（WRITE）、文本特征 FFF4（WRITE，原始 UTF-8，最多64字节并受连接写入长度限制）。发布到实际产品前须确认或替换这些 UUID。
 
 - 状态：`AA + temperature INT16 LE ×0.01 + power BOOL + brightness UINT8 + 55`。
 - 设置电源：`A1 02 + power BOOL + EE`；只更改电源。
 - 设置亮度：`A1 03 + brightness UINT8 + EE`；只更改亮度。
 - 定位动作：`A1 04 01 EE`；执行一次定位动作，duration=1 的单位由此示例约定为秒。
-- 温度用 VALUE；电源用 SWITCH；亮度用 SLIDER 与 NUMBER_INPUT；定位用 BUTTON，共五种组件。
+- 温度用 VALUE；电源用 SWITCH；亮度用 SLIDER 与 NUMBER_INPUT；定位用 BUTTON；文本发送用 TEXT_INPUT，共六种组件。
 - 固件须对未知命令/长度/范围拒绝或忽略，并在配套文档说明。示例不表示某块现有硬件已经实现它。
 
 验收至少包括：配置导入成功、初始读回、同帧多个字段通知更新、开关两个方向、亮度最小/最大与非整数拒绝、定位动作、畸形帧、断开/重连。对照 wire-vectors.json 逐字节核对；实际硬件验收由开发者执行并记录结果。

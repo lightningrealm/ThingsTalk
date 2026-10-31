@@ -122,7 +122,7 @@
   <string name="define_each_channel_separately_switching_channels_on_th_20e77a">Define each channel separately. Switching channels on the device page selects its bindings; unconfigured operations are unavailable.</string>
   <string name="tabs_only_switch_the_editor_control_and_state_routing_a_f366cc">Tabs only switch the editor. Control and state routing above remain unchanged. Both channels share widgets and payload formats.</string>
   <string name="define_payloads_then_select_fields_for_widgets_one_payl_428280">Define payloads, then select fields for widgets. One payload can provide multiple values such as temperature and humidity.</string>
-  <string name="binary_fields_are_packed_in_order_json_uses_flat_numeri_b3bb15">Binary fields are packed in order. JSON uses flat numeric or boolean fields. Configuration does not change device firmware.</string>
+  <string name="binary_fields_are_packed_in_order_json_uses_flat_numeri_b3bb15">Binary fields are packed in order. JSON uses flat numeric, boolean or UTF8 string fields. Configuration does not change device firmware.</string>
   <string name="fields_2686e3">%1$s%2$s · %3$s · %4$s fields</string>
   <string name="unnamed_format_1fe1ee">Unnamed format</string>
   <string name="payload_format_bc8670">Payload format %1$s</string>
@@ -137,7 +137,7 @@
   <string name="payload_header_fields_in_list_order_trailer_reads_and_n_05e49b">Payload = header + fields in list order + trailer. Reads and notifications validate the header, trailer and total length.</string>
   <string name="header_hex_optional_99f396">Header HEX (optional)</string>
   <string name="trailer_hex_optional_d81860">Trailer HEX (optional)</string>
-  <string name="field_ids_become_json_keys_numbers_use_displayed_values_9d525b">Field IDs become JSON keys. Numbers use displayed values; booleans use true / false. Numeric types still limit the valid range.</string>
+  <string name="field_ids_become_json_keys_numbers_use_displayed_values_9d525b">Field IDs become JSON keys. Numbers use displayed values; booleans use true / false; UTF8 uses strings. Numeric types still limit the valid range.</string>
   <string name="payload_fields_bff253">Payload fields</string>
   <string name="move_up_8a0c83">Move up</string>
   <string name="move_down_05c46f">Move down</string>
@@ -462,7 +462,7 @@ Characteristic %2$s</string>
   <string name="complete_payload_hex_4eb3d2">Complete payload HEX</string>
   <string name="complete_json_payload_1ff64a">Complete JSON payload</string>
   <string name="all_bytes_separated_by_spaces_or_line_breaks_maximum_51_7dcf66">All bytes, separated by spaces or line breaks. Maximum 512 bytes.</string>
-  <string name="json_must_include_all_declared_fields_as_numbers_or_boo_455bfe">JSON must include all declared fields as numbers or booleans. Maximum 512 bytes in UTF-8.</string>
+  <string name="json_must_include_all_declared_fields_as_numbers_or_boo_455bfe">JSON must include all declared fields as numbers, booleans or UTF8 strings according to their codecs. Maximum payload size: 512 bytes.</string>
   <string name="could_not_decode_payload_c0e662">Could not decode payload</string>
   <string name="decode_all_fields_925f6b">Decode all fields</string>
   <string name="enter_engineering_values_for_each_field_defaults_are_pr_50e14e">Enter engineering values for each field. Defaults are prefilled. Inspection does not change format defaults.</string>
@@ -1336,4 +1336,30 @@ Characteristic %2$s</string>
   <string name="panel_import_test_vectors">This is a protocol test-vector file, not a panel configuration. Import the .thingstalk.json file referenced by configuration.</string>
   <string name="panel_import_object_required">Panel configuration must be a JSON object. Select a .thingstalk.json file.</string>
   <string name="panel_import_invalid_structure">Cannot parse the panel configuration: invalid JSON syntax, fields or field types. Select the device’s .thingstalk.json configuration file.</string>
+  <string name="ai_setup_saved">The device confirmed saving AI settings. The endpoint, key and model have not been verified.</string>
+  <string name="ai_setup_required_fields">AI settings must include endpoint and model fields</string>
+  <string name="ai_setup_text_fields">AI endpoint and model must be non-secret text; the key must be secret text</string>
+  <string name="setup_default_fields">Defaults are supported only for device names or AI endpoints/models, never credentials</string>
+  <string name="setup_default_invalid">Invalid setting default format or length</string>
+  <string name="setup_default_notice">Suggested %1$s: %2$s. Prefilled only when the device is unconfigured; existing settings are preserved.</string>
+  <string name="text_input">Text input</string>
+  <string name="text_send">Send</string>
+  <string name="text_max_bytes">Maximum UTF-8 text bytes (1–512)</string>
+  <string name="text_byte_count">%1$s / %2$s UTF-8 bytes</string>
+  <string name="text_format_help">UTF-8: binary payloads allow one text field with optional framing; JSON uses a string field.</string>
+  <string name="text_empty">Enter text to send</string>
+  <string name="text_nul">Text must not contain NUL</string>
+  <string name="text_unicode">Text contains invalid Unicode characters</string>
+  <string name="text_limit">Text must not exceed %1$s UTF-8 bytes</string>
+  <string name="text_capability_schema">Text requires schemaVersion 3 or later and maxBytes of 1–512</string>
+  <string name="text_only_limit">Only text capabilities can set maxBytes</string>
+  <string name="text_inline_parameters">Text supports UTF-8 writes only, without numeric conversion or byte order</string>
+  <string name="text_ble_write_only">Text input supports writes only, without reads or notifications</string>
+  <string name="text_mqtt_publish_only">Text input supports MQTT publishing only</string>
+  <string name="text_field_parameters">Text fields do not use numeric conversion or byte order</string>
+  <string name="text_binary_single_field">Binary UTF-8 payloads allow one text field with optional header and trailer</string>
+  <string name="text_short">Text payload is too short</string>
+  <string name="text_framing">Text payload header or trailer does not match</string>
+  <string name="text_json_string">Text fields must be JSON strings</string>
+  <string name="text_no_hex_field">%1$s does not support HEX fields</string>
 </resources>

@@ -108,6 +108,12 @@
       "id": "locate",
       "label": "定位一次",
       "type": "ACTION"
+    },
+    {
+      "id": "message",
+      "label": "发送文本",
+      "type": "TEXT",
+      "maxBytes": 64
     }
   ],
   "bindings": [
@@ -193,6 +199,14 @@
           "formatId": "locate"
         }
       }
+    },
+    {
+      "capabilityId": "message",
+      "write": {
+        "serviceUuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+        "characteristicUuid": "0000fff4-0000-1000-8000-00805f9b34fb",
+        "codec": "UTF8"
+      }
     }
   ],
   "widgets": [
@@ -225,6 +239,12 @@
       "type": "BUTTON",
       "label": "定位一次",
       "capabilityId": "locate"
+    },
+    {
+      "id": "messageInput",
+      "type": "TEXT_INPUT",
+      "label": "发送文本",
+      "capabilityId": "message"
     }
   ]
 }

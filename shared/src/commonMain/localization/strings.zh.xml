@@ -122,7 +122,7 @@
   <string name="define_each_channel_separately_switching_channels_on_th_20e77a">分别定义两个通道的操作。展示页切换通道后，组件使用对应绑定；未配置的操作不可用。</string>
   <string name="tabs_only_switch_the_editor_control_and_state_routing_a_f366cc">标签只切换编辑内容，不改变上方控制通道和状态来源。两边共用组件与数据格式。</string>
   <string name="define_payloads_then_select_fields_for_widgets_one_payl_428280">先定义报文，再为组件选择字段。一个报文可以同时提供温度、湿度等多个值。</string>
-  <string name="binary_fields_are_packed_in_order_json_uses_flat_numeri_b3bb15">二进制字段按顺序紧密排列；JSON 使用平铺的数值或布尔字段。配置不会自动修改设备固件。</string>
+  <string name="binary_fields_are_packed_in_order_json_uses_flat_numeri_b3bb15">二进制字段按顺序紧密排列；JSON 使用平铺的数值、布尔或 UTF8 字符串字段。配置不会自动修改设备固件。</string>
   <string name="fields_2686e3">%1$s%2$s · %3$s · %4$s 字段</string>
   <string name="unnamed_format_1fe1ee">未命名格式</string>
   <string name="payload_format_bc8670">数据格式 %1$s</string>
@@ -137,7 +137,7 @@
   <string name="payload_header_fields_in_list_order_trailer_reads_and_n_05e49b">报文 = 帧头 + 按列表顺序编码的字段 + 帧尾。读取和通知会校验帧头、帧尾与完整长度。</string>
   <string name="header_hex_optional_99f396">帧头 HEX（可留空）</string>
   <string name="trailer_hex_optional_d81860">帧尾 HEX（可留空）</string>
-  <string name="field_ids_become_json_keys_numbers_use_displayed_values_9d525b">字段 ID 对应 JSON 的键。数值直接使用面板显示值，布尔使用 true / false；数值类型仍限制可表示范围。</string>
+  <string name="field_ids_become_json_keys_numbers_use_displayed_values_9d525b">字段 ID 对应 JSON 的键。数值直接使用面板显示值，布尔使用 true / false，UTF8 使用字符串；数值类型仍限制可表示范围。</string>
   <string name="payload_fields_bff253">报文字段</string>
   <string name="move_up_8a0c83">上移</string>
   <string name="move_down_05c46f">下移</string>
@@ -462,7 +462,7 @@
   <string name="complete_payload_hex_4eb3d2">完整报文 HEX</string>
   <string name="complete_json_payload_1ff64a">完整 JSON 报文</string>
   <string name="all_bytes_separated_by_spaces_or_line_breaks_maximum_51_7dcf66">完整字节，可用空格或换行分隔。最大 512 字节。</string>
-  <string name="json_must_include_all_declared_fields_as_numbers_or_boo_455bfe">JSON 须包含全部声明字段，使用数值或布尔值。UTF-8 编码后最大 512 字节。</string>
+  <string name="json_must_include_all_declared_fields_as_numbers_or_boo_455bfe">JSON 须包含全部声明字段，按编码使用数值、布尔或 UTF8 字符串。完整报文最大 512 字节。</string>
   <string name="could_not_decode_payload_c0e662">无法解析报文</string>
   <string name="decode_all_fields_925f6b">解析全部字段</string>
   <string name="enter_engineering_values_for_each_field_defaults_are_pr_50e14e">填写每个字段的工程值，已有默认值会预填。此处试算不会修改格式的默认值。</string>
@@ -1336,4 +1336,30 @@
   <string name="panel_import_test_vectors">该文件是协议测试向量，不是面板配置。请导入 configuration 指向的 .thingstalk.json 配置文件</string>
   <string name="panel_import_object_required">面板配置必须是 JSON 对象，请选择 .thingstalk.json 文件</string>
   <string name="panel_import_invalid_structure">无法解析面板配置：JSON 语法、字段或字段类型不符合规范，请选择设备的 .thingstalk.json 配置文件</string>
+  <string name="ai_setup_saved">设备已确认保存 AI 配置；尚未验证服务地址、Key 或模型是否可用。</string>
+  <string name="ai_setup_required_fields">AI 设置必须包含接口地址和模型字段</string>
+  <string name="ai_setup_text_fields">AI 设置地址和模型必须为非秘密文本，Key 使用秘密文本</string>
+  <string name="setup_default_fields">设置默认值仅支持设备名称或 AI 地址/模型，不允许凭据默认值</string>
+  <string name="setup_default_invalid">设置默认值格式或长度无效</string>
+  <string name="setup_default_notice">%1$s建议值：%2$s。仅在设备未配置时预填；已有配置不会覆盖。</string>
+  <string name="text_input">文本输入</string>
+  <string name="text_send">发送</string>
+  <string name="text_max_bytes">文本最大 UTF-8 字节数（1–512）</string>
+  <string name="text_byte_count">%1$s / %2$s UTF-8 字节</string>
+  <string name="text_format_help">UTF-8：二进制报文仅允许一个文本字段，可加帧头/帧尾；JSON 使用字符串字段。</string>
+  <string name="text_empty">请输入要发送的文本</string>
+  <string name="text_nul">文本不能包含 NUL</string>
+  <string name="text_unicode">文本包含无效的 Unicode 字符</string>
+  <string name="text_limit">文本不能超过 %1$s 个 UTF-8 字节</string>
+  <string name="text_capability_schema">文本能力需要 schemaVersion 3 及以上，maxBytes 为 1–512</string>
+  <string name="text_only_limit">只有文本能力能设置 maxBytes</string>
+  <string name="text_inline_parameters">文本仅支持 UTF-8 写入，不使用数值换算或字节序</string>
+  <string name="text_ble_write_only">文本输入仅支持写入，不支持读取或通知</string>
+  <string name="text_mqtt_publish_only">文本输入仅支持 MQTT 发布</string>
+  <string name="text_field_parameters">文本字段不使用数值换算或字节序</string>
+  <string name="text_binary_single_field">二进制 UTF-8 报文只能有一个文本字段，可设置帧头和帧尾</string>
+  <string name="text_short">文本报文长度不足</string>
+  <string name="text_framing">文本报文帧头或帧尾不匹配</string>
+  <string name="text_json_string">文本字段必须为 JSON 字符串</string>
+  <string name="text_no_hex_field">%1$s 不支持 HEX 字段</string>
 </resources>

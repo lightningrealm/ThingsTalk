@@ -8,6 +8,8 @@
 captures/
 *.apk
 *.aab
+# Android Studio exported release artifacts and metadata
+/androidApp/release/
 
 # Machine-specific SDK paths and IDE settings
 local.properties

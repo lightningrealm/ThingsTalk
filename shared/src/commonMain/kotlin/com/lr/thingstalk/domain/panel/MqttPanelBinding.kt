@@ -20,6 +20,7 @@ internal fun validateMqttBinding(definition: PanelDefinition, binding: PanelBind
     issue(capability == null, "MQTT 绑定引用不存在的能力：${binding.capabilityId}")
     issue(binding.read != null || binding.write != null || binding.notify != null || binding.actionValue != null, "MQTT 绑定不能包含 BLE 操作或固定 HEX 动作")
     issue(binding.publish == null && binding.subscribe == null, "MQTT 绑定至少需要发布或订阅")
+    issue(capability?.type == CapabilityType.TEXT && (binding.publish == null || binding.subscribe != null), "文本输入仅支持 MQTT 发布")
     issue(capability?.type == CapabilityType.ACTION && (binding.publish == null || binding.subscribe != null), "MQTT 动作仅支持发布")
     listOf(true to binding.publish, false to binding.subscribe).forEach { (publish, operation) ->
         if (operation != null) {
@@ -37,6 +38,7 @@ internal fun validateMqttBinding(definition: PanelDefinition, binding: PanelBind
                     if (field != null) issue(when (capability?.type) {
                         CapabilityType.BOOLEAN -> field.codec != CodecType.BOOLEAN
                         CapabilityType.NUMBER -> field.codec !in numericPanelCodecs
+                        CapabilityType.TEXT -> field.codec != CodecType.UTF8
                         else -> true
                     }, "MQTT 字段与能力类型不匹配")
                 }

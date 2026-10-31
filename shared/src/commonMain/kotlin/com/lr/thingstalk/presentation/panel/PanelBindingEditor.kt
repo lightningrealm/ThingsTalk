@@ -26,8 +26,9 @@ internal fun PanelBindingEditor(
         CapabilityType.BOOLEAN -> listOf(CodecType.BOOLEAN)
         CapabilityType.NUMBER -> numericPanelCodecs.toList()
         CapabilityType.ACTION -> listOf(CodecType.HEX)
+        CapabilityType.TEXT -> listOf(CodecType.UTF8)
     }
-    if (capability.type != CapabilityType.ACTION) {
+    if (capability.type !in listOf(CapabilityType.ACTION, CapabilityType.TEXT)) {
         OperationEditor(tr(AppStrings.read_b6b97a), OperationKind.READ, binding.read, codecs, services, payloadFormats, capability.type) { onChange(binding.copy(read = it)) }
         OperationEditor(tr(AppStrings.receive_notifications_18d4c7), OperationKind.NOTIFY, binding.notify, codecs, services, payloadFormats, capability.type) { onChange(binding.copy(notify = it)) }
     }
@@ -229,6 +230,7 @@ private fun PayloadField.compatibleWith(type: CapabilityType): Boolean = when (t
     CapabilityType.BOOLEAN -> codec == CodecType.BOOLEAN
     CapabilityType.NUMBER -> codec in numericPanelCodecs
     CapabilityType.ACTION -> false
+    CapabilityType.TEXT -> codec == CodecType.UTF8
 }
 
 private fun compatiblePayloadFormats(formats: List<PayloadFormat>, type: CapabilityType): List<PayloadFormat> =
@@ -275,5 +277,6 @@ private fun CodecType.bindingLabel() = when (this) {
     CodecType.INT32 -> tr(AppStrings.int32_signed_32_bit_integer_daefba)
     CodecType.FLOAT32 -> tr(AppStrings.float32_32_bit_floating_point_e75c5e)
     CodecType.BOOLEAN -> tr(AppStrings.boolean_custom_true_false_bytes_1c826c)
+    CodecType.UTF8 -> "UTF-8"
     CodecType.HEX -> tr(AppStrings.hex_fixed_complete_payload_d22253)
 }

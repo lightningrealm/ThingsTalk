@@ -16,6 +16,22 @@ class HardwareSkillContractTest {
     private val vectors = Json.parseToJsonElement(File(assets, "wire-vectors.json").readText()).jsonObject
     private val inspector = DefaultPayloadInspector()
 
+    @Test fun aiSetupExampleImportsOnMobileAndProjectsToMqttOnWeb() {
+        val source = File(assets, "ai-setup.thingstalk.json").readText()
+        val mobile = com.lr.thingstalk.presentation.panel.preparePanelImport(source, bleAvailable = true)
+        assertEquals(14, mobile.panel.widgets.size)
+        assertEquals(3, mobile.panel.setupPanels.size)
+        assertEquals(SetupProtocol.BLE_AI_SETTINGS_V1, mobile.panel.setupPanels.last().protocol)
+        assertEquals(mobile.panel, PanelJson.decode(PanelJson.encode(mobile.panel)))
+        val web = com.lr.thingstalk.presentation.panel.preparePanelImport(source, bleAvailable = false)
+        assertTrue(web.mqttOnly)
+        assertEquals(PanelTransport.MQTT, web.panel.transport)
+        assertEquals(11, web.panel.widgets.size)
+        assertTrue(web.panel.setupPanels.isEmpty())
+        assertEquals(web.panel, PanelJson.decode(web.source))
+        assertFalse(web.panel.widgets.any { it.capabilityId in setOf("wifi", "mqtt", "brightness") })
+    }
+
     @Test fun setupExamplesImportAndPreserveFormsAndChannelBindings() {
         for (file in listOf(File(assets, "setup-panel.thingstalk.json"), File(root, "docs/examples/muyu-setup-v7.thingstalk.json"), File(root, "docs/examples/muyu-network-default-v7.thingstalk.json"))) {
             val panel = PanelJson.decode(file.readText())

@@ -26,4 +26,4 @@ data class InspectedPayloadField(
 )
 
 const val MAX_INSPECTOR_SOURCE_CHARS = 2048
-const val MAX_INSPECTOR_VALUE_CHARS = 128
+const val MAX_INSPECTOR_VALUE_CHARS = 512

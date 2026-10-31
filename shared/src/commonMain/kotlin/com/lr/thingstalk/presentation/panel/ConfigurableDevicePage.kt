@@ -105,6 +105,7 @@ private fun PanelWidgetView(
             }
             WidgetType.SLIDER -> PanelNumberSlider(widget.label, capability, value, enabled && binding?.canWrite == true, onWrite)
             WidgetType.NUMBER_INPUT -> PanelNumberInput(widget.label, capability, value, enabled && binding?.canWrite == true, onWrite)
+            WidgetType.TEXT_INPUT -> PanelTextInput(widget.label, capability, enabled && binding?.canWrite == true, onWrite)
             WidgetType.BUTTON -> Primary(widget.label, enabled && binding?.canWrite == true) { onWrite(binding?.actionValue.orEmpty()) }
         }
         // Reserve one local status line so short commands do not move the following cards.

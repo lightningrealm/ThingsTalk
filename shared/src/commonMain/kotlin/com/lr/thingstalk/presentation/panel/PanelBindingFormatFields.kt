@@ -56,7 +56,7 @@ internal fun PanelBindingFormatFields(
             isError = !validBindingHex(operation.trueHex, 1, 32) || !validPair,
             supportingText = { Text(tr(AppStrings.use_different_equal_length_byte_sequences_of_1_32_bytes_891a10)) },
             singleLine = true, modifier = Modifier.fillMaxWidth())
-    } else {
+    } else if (operation.codec != CodecType.UTF8) {
         Text(tr(AppStrings.displayed_value_raw_value_scale_offset_9561a2), color = Muted, style = MaterialTheme.typography.bodySmall)
         OutlinedTextField(scale, {
             scale = it

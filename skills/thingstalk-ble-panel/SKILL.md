@@ -7,10 +7,12 @@ description: 为 语物（ThingsTalk） 设计 BLE、MQTT 或双连接硬件协�
 
 为用户指定的硬件能力生成固件协议及 `.thingstalk.json` 面板。配置定义组件、能力、报文和 BLE/MQTT 绑定；App 使用已有组件渲染，不需要硬件开发者编写 Compose 页面。
 
+硬件接入必须基于当前已实现的 panel/widget 和设置协议设计，先按 [能力边界与扩展提示](references/contract.md#能力边界与扩展提示) 检查每项需求。可组合现有组件创建新设备面板，但不得自创 widget、SetupProtocol 或改用已有字段 ID 承载不同语义。遇到需要新面板能力的场景，必须在 AI 面向用户的最终输出中显著提示“需要客户端扩展，当前不可直接使用”，说明缺口、已有能力的替代方案及待实现内容；未支持部分不得混入可导入 JSON，也不得静默省略。
+
 ## 先区分需求
 
-- **普通控制面板**：日常读值、开关、滑块、数值输入、按钮，使用 capabilities/widgets/payloadFormats 和 BLE/MQTT 绑定。
-- **设置面板（SetupPanel）**：Wi-Fi、设备端 MQTT 等文本/密码表单，使用 v7 顶层 setupPanels，分组校验、提交和确认。当前只通过 BLE_CHUNKED_SETTINGS_V1 执行，不支持 MQTT 提交设置。
+- **普通控制面板**：日常读值、开关、滑块、数值输入、文本输入加发送按钮、固定动作按钮，使用 capabilities/widgets/payloadFormats 和 BLE/MQTT 绑定。
+- **设置面板（SetupPanel）**：Wi-Fi、设备端 MQTT 等文本/密码表单，使用 v7 顶层 setupPanels，分组校验、提交和确认。网络设置通过 BLE_CHUNKED_SETTINGS_V1，独立 AI 设置通过 BLE_AI_SETTINGS_V1 执行，不支持 MQTT 提交设置。
 - **App 本机 MQTT 连接配置**：ThingsTalk 连接 Broker 使用的地址、账号密码和 Client ID，由用户在 App 连接库管理，不是上述两种面板。
 
 两种面板可共存于同一份设备 JSON 和同一个展示页；PanelDefinition 是整份配置，不增加名为 normalPanels、panels 或 widget.type=SETUP 的字段。不要因为硬件“支持 MQTT”就给它增加设备端 MQTT 设置表单，也不要用普通 BUTTON 承载密码提交。按用户实际需要选择。
@@ -19,8 +21,8 @@ description: 为 语物（ThingsTalk） 设计 BLE、MQTT 或双连接硬件协�
 
 保留 `thingstalk-ble-panel` 名称以兼容已有引用。先读 [兼容规范与选择表](references/contract.md) 和 [能力快照](references/compatibility.json)，再读相关分支：
 
-- 普通 BLE 控制：v3；参考 [五组件示例](assets/all-widgets.thingstalk.json) 和 [字节向量](assets/wire-vectors.json)。
-- 普通 MQTT 控制：推荐 v4；读 [MQTT 与连接配置规范](references/mqtt-dual.md)，参考 [五组件示例](assets/mqtt-all-widgets.thingstalk.json)。Web 仅 MQTT，不提供 BLE 设置表单。
+- 普通 BLE 控制：v3；参考 [六组件示例](assets/all-widgets.thingstalk.json) 和 [字节向量](assets/wire-vectors.json)。
+- 普通 MQTT 控制：推荐 v4；读 [MQTT 与连接配置规范](references/mqtt-dual.md)，参考 [六组件示例](assets/mqtt-all-widgets.thingstalk.json)。Web 仅 MQTT，不提供 BLE 设置表单。
 - 双连接控制：新交付使用 v6 分通道；读同一 MQTT 规范，参考 [v6 示例](assets/dual-channels.thingstalk.json)。确有固定混合路由需求时参考 [旧 v5 示例](assets/dual-power.thingstalk.json)。
 - 设备设置表单：整份配置使用 v7；读 [设置表单与事务规范](references/ble-network-provisioning.md)，参考 [可导入示例](assets/setup-panel.thingstalk.json)。可只有设置表单，也可与普通组件共存；DUAL 的 BLE/MQTT 绑定仍分区。改标签、UUID 不会改变适配器的字段编号或线协议。
 

@@ -37,8 +37,8 @@
 - operation 字段仅 topic、payload、qos（默认 0）、retain（默认 false）。支持 QoS 0/1/2；同一状态 topic 必须使用相同订阅 QoS。
 - 面板 topic 必须精确、非空，不含 NUL、`+`、`#`、代理码点，不以 `$share/` 开头，UTF-8 长度不超过 65535 字节。大小写及路径须与固件一致。工作台的通配订阅能力不代表面板也支持。
 - publish 固定非 retained；subscribe 不需要配置 retain。任何操作写 retain:true 均拒绝。Broker 已保留的状态消息可以接收。
-- BOOLEAN/NUMBER 选择有效 fieldId；ACTION 只能 publish，payload 仅 formatId，不能 subscribe。ACTION 全部字段必须有 defaultValue，属性发布时其他字段必须有 defaultValue。不会自动合并最新状态到命令。
-- BINARY/JSON 与 BLE 共用编解码约束，完整报文 1–512 字节。JSON 是严格平面数值/布尔对象，不能多键、漏键、嵌套或使用字符串值。
+- BOOLEAN/NUMBER/TEXT 选择有效 fieldId；TEXT 仅 publish，绑定 UTF8 字段，不支持 subscribe；ACTION 只能 publish，payload 仅 formatId，不能 subscribe。ACTION 全部字段必须有 defaultValue，属性发布时其他字段必须有 defaultValue。不会自动合并最新状态到命令。
+- BINARY/JSON 与 BLE 共用编解码约束，完整报文 1–512 字节。JSON 是严格平面数值/布尔/UTF8 字符串对象，不能多键、漏键或嵌套。BINARY 的 UTF8 格式只能有一个文本字段，可设置帧头尾。
 - 没有通用 read 请求或自动请求/应答匹配。设备主动 publish 状态，App subscribe 更新显示；发送成功不乐观修改状态。QoS 确认不等于设备业务成功。固件应说明重复消息的幂等处理，特别是有副作用的动作。
 
 示例协议（须替换为实际设备 topic）：向 `thingstalk/demo/state` 发布 `{"temperature":25.0,"power":true,"brightness":80}`；关闭电源命令为 `thingstalk/demo/set/power` + `{"power":false}`，亮度 50 为 `thingstalk/demo/set/brightness` + `{"brightness":50}`，定位为 `thingstalk/demo/set/locate` + `{"locate":true}`。数值边界、缺失/额外字段及错误类型需纳入验收。

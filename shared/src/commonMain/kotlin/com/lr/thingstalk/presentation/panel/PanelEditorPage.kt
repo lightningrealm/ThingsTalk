@@ -182,12 +182,13 @@ fun PanelEditorPage(viewModel: PanelViewModel, editor: PanelEditorViewModel, ins
                             WidgetType.VALUE, WidgetType.SLIDER, WidgetType.NUMBER_INPUT -> CapabilityType.NUMBER
                             WidgetType.SWITCH -> CapabilityType.BOOLEAN
                             WidgetType.BUTTON -> CapabilityType.ACTION
+                            WidgetType.TEXT_INPUT -> CapabilityType.TEXT
                         }
                         val capability = PanelCapability("control-$suffix", type.label(), capabilityType,
                             minimum = if (capabilityType == CapabilityType.NUMBER) 0.0 else null,
                             maximum = if (capabilityType == CapabilityType.NUMBER) 100.0 else null)
                         val widget = PanelWidget("widget-$suffix", type, type.label(), capability.id)
-                        draft = draft.copy(capabilities = draft.capabilities + capability, widgets = draft.widgets + widget)
+                        draft = draft.copy(schemaVersion = if (type == WidgetType.TEXT_INPUT) maxOf(3, draft.schemaVersion) else draft.schemaVersion, capabilities = draft.capabilities + capability, widgets = draft.widgets + widget)
                         selectedId = widget.id
                     }, enabled = draft.widgets.size < 32 && draft.capabilities.size < 32) { Text("＋ ${type.label()}") }
                 }
@@ -219,6 +220,16 @@ fun PanelEditorPage(viewModel: PanelViewModel, editor: PanelEditorViewModel, ins
                 Choices(types.map { it.label() }, selected.type.label()) { label -> changeWidget(selected.copy(type = types.first { it.label() == label })) }
                 if (capability.type == CapabilityType.NUMBER) key(capability.id, state.definition, importedRevision) {
                     NumberCapabilityFields(capability) { changed -> draft = draft.copy(capabilities = draft.capabilities.map { if (it.id == changed.id) changed else it }) }
+                }
+                if (capability.type == CapabilityType.TEXT) key(capability.id, state.definition, importedRevision) {
+                    var limit by remember { mutableStateOf(capability.maxBytes.toString()) }
+                    OutlinedTextField(limit, {
+                        limit = it
+                        draft = draft.copy(capabilities = draft.capabilities.map { current ->
+                            if (current.id == capability.id) current.copy(maxBytes = it.toIntOrNull() ?: 0) else current
+                        })
+                    }, label = { Text(tr(AppStrings.text_max_bytes)) }, singleLine = true,
+                        isError = limit.toIntOrNull() !in 1..512, modifier = Modifier.fillMaxWidth())
                 }
                 Text(tr(AppStrings.capability_d7feb1, capability.id), color = Muted, style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = {
@@ -315,8 +326,9 @@ private fun compatibleTypes(capability: PanelCapability): List<WidgetType> = whe
     CapabilityType.NUMBER -> listOf(WidgetType.VALUE, WidgetType.SLIDER, WidgetType.NUMBER_INPUT)
     CapabilityType.BOOLEAN -> listOf(WidgetType.VALUE, WidgetType.SWITCH)
     CapabilityType.ACTION -> listOf(WidgetType.BUTTON)
+    CapabilityType.TEXT -> listOf(WidgetType.TEXT_INPUT)
 }
-private fun WidgetType.label() = when (this) { WidgetType.VALUE -> tr(AppStrings.status_card_7ec304); WidgetType.SWITCH -> tr(AppStrings.switch_d7716c); WidgetType.SLIDER -> tr(AppStrings.slider_6c9e05); WidgetType.BUTTON -> tr(AppStrings.button_a6a6ea); WidgetType.NUMBER_INPUT -> tr(AppStrings.numeric_input_a9fc9d) }
+private fun WidgetType.label() = when (this) { WidgetType.VALUE -> tr(AppStrings.status_card_7ec304); WidgetType.SWITCH -> tr(AppStrings.switch_d7716c); WidgetType.SLIDER -> tr(AppStrings.slider_6c9e05); WidgetType.BUTTON -> tr(AppStrings.button_a6a6ea); WidgetType.NUMBER_INPUT -> tr(AppStrings.numeric_input_a9fc9d); WidgetType.TEXT_INPUT -> tr(AppStrings.text_input) }
 
 @Composable
 internal fun PanelPicker(label: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {

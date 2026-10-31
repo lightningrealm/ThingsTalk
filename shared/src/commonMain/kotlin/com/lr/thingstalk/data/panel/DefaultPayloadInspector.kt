@@ -43,10 +43,11 @@ class DefaultPayloadInspector : PayloadInspector {
             jsonText = if (format.encoding == PayloadEncoding.JSON) bytes.decodeToString(throwOnInvalidSequence = true) else null,
             fields = format.fields.map { field ->
                 val binary = format.encoding == PayloadEncoding.BINARY
+                val width = if (field.codec == CodecType.UTF8) values.getValue(field.id).encodeToByteArray().size else field.byteWidth()
                 InspectedPayloadField(field.id, field.codec, values.getValue(field.id),
                     byteOffset = if (binary) offset else null,
-                    byteCount = if (binary) field.byteWidth() else null,
-                ).also { if (binary) offset += field.byteWidth() }
+                    byteCount = if (binary) width else null,
+                ).also { if (binary) offset += width }
             },
         )
     }

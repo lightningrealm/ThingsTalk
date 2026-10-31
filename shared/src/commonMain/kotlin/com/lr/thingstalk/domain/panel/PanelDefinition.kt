@@ -37,12 +37,15 @@ data class PanelCapability(
     val maximum: Double? = null,
     val unit: String = "",
     val step: Double = 1.0,
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val maxBytes: Int = 512,
 )
-@Serializable enum class CapabilityType { BOOLEAN, NUMBER, ACTION }
+@Serializable enum class CapabilityType { BOOLEAN, NUMBER, ACTION, TEXT }
 
 @Serializable
 data class PanelWidget(val id: String, val type: WidgetType, val label: String, val capabilityId: String)
-@Serializable enum class WidgetType { VALUE, SWITCH, SLIDER, BUTTON, NUMBER_INPUT }
+@Serializable enum class WidgetType { VALUE, SWITCH, SLIDER, BUTTON, NUMBER_INPUT, TEXT_INPUT }
 
 @Serializable
 data class PanelBinding(
@@ -81,7 +84,7 @@ data class BleOperationBinding(
     val payload: PayloadReference? = null,
 )
 @Serializable enum class PanelWriteMode { WITH_RESPONSE, WITHOUT_RESPONSE }
-@Serializable enum class CodecType { UINT8, BOOLEAN, HEX, INT8, UINT16, INT16, UINT32, INT32, FLOAT32 }
+@Serializable enum class CodecType { UINT8, BOOLEAN, HEX, INT8, UINT16, INT16, UINT32, INT32, FLOAT32, UTF8 }
 @Serializable enum class PanelByteOrder { LITTLE_ENDIAN, BIG_ENDIAN }
 
 interface PanelOperations {
@@ -134,6 +137,8 @@ fun validatePanel(definition: PanelDefinition): List<String> = buildList {
         issue(capability.minimum?.isFinite() == false || capability.maximum?.isFinite() == false, "数值范围必须有限")
         issue(capability.type != CapabilityType.NUMBER && (capability.minimum != null || capability.maximum != null), "只有数值能力能定义范围")
         issue((legacy || capability.type != CapabilityType.NUMBER) && capability.step != 1.0, "此能力不支持自定义步长")
+        issue(capability.type == CapabilityType.TEXT && (definition.schemaVersion < 3 || capability.maxBytes !in 1..512), "文本能力需要 schemaVersion 3 及以上，maxBytes 为 1–512")
+        issue(capability.type != CapabilityType.TEXT && capability.maxBytes != 512, "只有文本能力能设置 maxBytes")
         if (capability.type == CapabilityType.NUMBER) {
             val min = capability.minimum ?: 0.0
             val max = capability.maximum ?: 255.0
@@ -170,6 +175,7 @@ fun validatePanel(definition: PanelDefinition): List<String> = buildList {
                 CapabilityType.BOOLEAN -> operation.codec == CodecType.BOOLEAN
                 CapabilityType.NUMBER -> operation.codec in if (legacy) setOf(CodecType.UINT8) else numericPanelCodecs
                 CapabilityType.ACTION -> operation.codec == CodecType.HEX
+                CapabilityType.TEXT -> operation.codec == CodecType.UTF8
                 null -> true
             }
             issue(!compatible, "能力与编解码类型不匹配：${binding.capabilityId}")
@@ -190,6 +196,7 @@ fun validatePanel(definition: PanelDefinition): List<String> = buildList {
                         issue(!isPanelHex(falseValue, 1, 32) || !isPanelHex(trueValue, 1, 32), "布尔值需要 1–32 字节的完整 HEX 数据")
                         issue(falseValue.length != trueValue.length || falseValue.equals(trueValue, ignoreCase = true), "布尔真值和假值必须等长且不同")
                     }
+                    CodecType.UTF8 -> issue(kind != "write" || operation.byteOrder != PanelByteOrder.LITTLE_ENDIAN || operation.scale != 1.0 || operation.bias != 0.0 || operation.falseHex != "00" || operation.trueHex != "01", "文本仅支持 UTF-8 写入，不使用数值换算或字节序")
                     CodecType.HEX -> issue(!operation.hasDefaultV2Parameters(), "固定 HEX 动作不能定义额外编解码参数")
                     else -> issue(operation.falseHex != "00" || operation.trueHex != "01", "数值操作不能定义布尔编码")
                 }
@@ -202,6 +209,7 @@ fun validatePanel(definition: PanelDefinition): List<String> = buildList {
                 }
             }
         }
+        issue(capability?.type == CapabilityType.TEXT && (binding.write == null || binding.read != null || binding.notify != null), "文本输入仅支持写入，不支持读取或通知")
         if (capability?.type == CapabilityType.ACTION) {
             issue(binding.write == null || binding.read != null || binding.notify != null, "动作仅支持写入，不支持读取或通知")
             if (binding.write?.payload != null) {
@@ -222,10 +230,11 @@ fun validatePanel(definition: PanelDefinition): List<String> = buildList {
             WidgetType.SWITCH -> CapabilityType.BOOLEAN
             WidgetType.SLIDER, WidgetType.NUMBER_INPUT -> CapabilityType.NUMBER
             WidgetType.BUTTON -> CapabilityType.ACTION
+            WidgetType.TEXT_INPUT -> CapabilityType.TEXT
         }
         issue(legacy && widget.type == WidgetType.NUMBER_INPUT, "数值输入组件需要 schemaVersion 2")
         issue(expected != null && capability?.type != expected, "控件与能力类型不匹配：${widget.id}")
-        issue(widget.type == WidgetType.VALUE && (capability?.type == CapabilityType.ACTION || (binding != null && binding.read == null && binding.notify == null && binding.subscribe == null)), "数值卡片需要可读取或通知的属性")
+        issue(widget.type == WidgetType.VALUE && (capability?.type in listOf(CapabilityType.ACTION, CapabilityType.TEXT) || (binding != null && binding.read == null && binding.notify == null && binding.subscribe == null)), "数值卡片需要可读取或通知的属性")
         issue(widget.type != WidgetType.VALUE && binding != null && !binding.canWrite, "交互控件需要写入绑定：${widget.id}")
         if (widget.type == WidgetType.SLIDER && capability != null) {
             val min = capability.minimum ?: 0.0
@@ -250,7 +259,7 @@ internal fun CodecType.byteWidth(): Int = when (this) {
     CodecType.UINT8, CodecType.INT8, CodecType.BOOLEAN -> 1
     CodecType.UINT16, CodecType.INT16 -> 2
     CodecType.UINT32, CodecType.INT32, CodecType.FLOAT32 -> 4
-    CodecType.HEX -> 0
+    CodecType.HEX, CodecType.UTF8 -> 0
 }
 
 internal fun String.compactPanelHex(): String = filterNot { it.isWhitespace() }

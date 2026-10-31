@@ -1,0 +1,926 @@
+{
+  "schemaVersion": 7,
+  "title": "蓝色大肥鱼",
+  "transport": "DUAL",
+  "defaultChannel": "BLE",
+  "payloadFormats": [
+    {
+      "id": "status",
+      "label": "蓝色大肥鱼状态",
+      "prefixHex": "AA",
+      "suffixHex": "55",
+      "fields": [
+        {
+          "id": "request",
+          "codec": "UINT32"
+        },
+        {
+          "id": "busy",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mood",
+          "codec": "UINT8"
+        },
+        {
+          "id": "contextBytes",
+          "codec": "UINT16"
+        },
+        {
+          "id": "error",
+          "codec": "UINT8"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "brightness",
+      "label": "屏幕亮度",
+      "fields": [
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "label": "网络连接",
+      "fields": [
+        {
+          "id": "wifi",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mqtt",
+          "codec": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "mqttState",
+      "label": "MQTT 状态",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "request",
+          "codec": "UINT32"
+        },
+        {
+          "id": "busy",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "mood",
+          "codec": "UINT8"
+        },
+        {
+          "id": "contextBytes",
+          "codec": "UINT16"
+        },
+        {
+          "id": "error",
+          "codec": "UINT8"
+        },
+        {
+          "id": "battery",
+          "codec": "UINT8"
+        },
+        {
+          "id": "batteryValid",
+          "codec": "BOOLEAN"
+        },
+        {
+          "id": "brightness",
+          "codec": "UINT8"
+        }
+      ]
+    },
+    {
+      "id": "greetCommand",
+      "label": "打个招呼",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "1"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "greetMqtt",
+      "label": "打个招呼 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "greet",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "jokeCommand",
+      "label": "讲个笑话",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "2"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "jokeMqtt",
+      "label": "讲个笑话 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "joke",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "encourageCommand",
+      "label": "鼓励我",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "3"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "encourageMqtt",
+      "label": "鼓励我 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "encourage",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "continueCommand",
+      "label": "继续聊",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "4"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "continueMqtt",
+      "label": "继续聊 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "continue",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "compressCommand",
+      "label": "整理记忆",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "5"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "compressMqtt",
+      "label": "整理记忆 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "compress",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "forgetCommand",
+      "label": "清空记忆",
+      "prefixHex": "A2",
+      "fields": [
+        {
+          "id": "opcode",
+          "codec": "UINT8",
+          "defaultValue": "6"
+        },
+        {
+          "id": "reserved",
+          "codec": "UINT16",
+          "defaultValue": "0"
+        }
+      ]
+    },
+    {
+      "id": "forgetMqtt",
+      "label": "清空记忆 MQTT",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "forget",
+          "codec": "BOOLEAN",
+          "defaultValue": "true"
+        }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "request",
+      "label": "请求编号",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "step": 1
+    },
+    {
+      "id": "busy",
+      "label": "正在思考",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "contextBytes",
+      "label": "记忆占用",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 10000,
+      "step": 1,
+      "unit": "B"
+    },
+    {
+      "id": "error",
+      "label": "请求错误（0 正常）",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 7,
+      "step": 1
+    },
+    {
+      "id": "battery",
+      "label": "电量",
+      "type": "NUMBER",
+      "minimum": 0,
+      "maximum": 100,
+      "step": 1
+    },
+    {
+      "id": "brightness",
+      "label": "屏幕亮度",
+      "type": "NUMBER",
+      "minimum": 10,
+      "maximum": 100,
+      "step": 1
+    },
+    {
+      "id": "wifi",
+      "label": "Wi-Fi 已连接",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "mqtt",
+      "label": "MQTT 已就绪",
+      "type": "BOOLEAN"
+    },
+    {
+      "id": "greet",
+      "label": "打个招呼",
+      "type": "ACTION"
+    },
+    {
+      "id": "joke",
+      "label": "讲个笑话",
+      "type": "ACTION"
+    },
+    {
+      "id": "encourage",
+      "label": "鼓励我",
+      "type": "ACTION"
+    },
+    {
+      "id": "continue",
+      "label": "继续聊",
+      "type": "ACTION"
+    },
+    {
+      "id": "compress",
+      "label": "整理记忆",
+      "type": "ACTION"
+    },
+    {
+      "id": "forget",
+      "label": "清空记忆",
+      "type": "ACTION"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "requestCard",
+      "label": "请求编号",
+      "type": "VALUE",
+      "capabilityId": "request"
+    },
+    {
+      "id": "busyCard",
+      "label": "正在思考",
+      "type": "VALUE",
+      "capabilityId": "busy"
+    },
+    {
+      "id": "contextBytesCard",
+      "label": "记忆占用",
+      "type": "VALUE",
+      "capabilityId": "contextBytes"
+    },
+    {
+      "id": "errorCard",
+      "label": "请求错误（0 正常）",
+      "type": "VALUE",
+      "capabilityId": "error"
+    },
+    {
+      "id": "batteryCard",
+      "label": "电量",
+      "type": "VALUE",
+      "capabilityId": "battery"
+    },
+    {
+      "id": "brightnessCard",
+      "label": "屏幕亮度",
+      "type": "SLIDER",
+      "capabilityId": "brightness"
+    },
+    {
+      "id": "wifiCard",
+      "label": "Wi-Fi 已连接",
+      "type": "VALUE",
+      "capabilityId": "wifi"
+    },
+    {
+      "id": "mqttCard",
+      "label": "MQTT 已就绪",
+      "type": "VALUE",
+      "capabilityId": "mqtt"
+    },
+    {
+      "id": "greetButton",
+      "label": "打个招呼",
+      "type": "BUTTON",
+      "capabilityId": "greet"
+    },
+    {
+      "id": "jokeButton",
+      "label": "讲个笑话",
+      "type": "BUTTON",
+      "capabilityId": "joke"
+    },
+    {
+      "id": "encourageButton",
+      "label": "鼓励我",
+      "type": "BUTTON",
+      "capabilityId": "encourage"
+    },
+    {
+      "id": "continueButton",
+      "label": "继续聊",
+      "type": "BUTTON",
+      "capabilityId": "continue"
+    },
+    {
+      "id": "compressButton",
+      "label": "整理记忆",
+      "type": "BUTTON",
+      "capabilityId": "compress"
+    },
+    {
+      "id": "forgetButton",
+      "label": "清空记忆",
+      "type": "BUTTON",
+      "capabilityId": "forget"
+    }
+  ],
+  "channels": {
+    "ble": {
+      "bindings": [
+        {
+          "capabilityId": "request",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "request"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "request"
+            }
+          }
+        },
+        {
+          "capabilityId": "busy",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "busy"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "busy"
+            }
+          }
+        },
+        {
+          "capabilityId": "contextBytes",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "contextBytes"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "contextBytes"
+            }
+          }
+        },
+        {
+          "capabilityId": "error",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "error"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "error"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a003-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "status",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "brightness",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          },
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a002-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "brightness",
+              "fieldId": "brightness"
+            }
+          }
+        },
+        {
+          "capabilityId": "wifi",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "wifi"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "wifi"
+            }
+          }
+        },
+        {
+          "capabilityId": "mqtt",
+          "read": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "mqtt"
+            }
+          },
+          "notify": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a00b-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "network",
+              "fieldId": "mqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "greet",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "greetCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "joke",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "jokeCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "encourage",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "encourageCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "continue",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "continueCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "compress",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "compressCommand"
+            }
+          }
+        },
+        {
+          "capabilityId": "forget",
+          "write": {
+            "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+            "characteristicUuid": "5c53a004-7d8a-4b19-9c63-414950415353",
+            "payload": {
+              "formatId": "forgetCommand"
+            }
+          }
+        }
+      ]
+    },
+    "mqtt": {
+      "bindings": [
+        {
+          "capabilityId": "request",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "request"
+            }
+          }
+        },
+        {
+          "capabilityId": "busy",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "busy"
+            }
+          }
+        },
+        {
+          "capabilityId": "contextBytes",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "contextBytes"
+            }
+          }
+        },
+        {
+          "capabilityId": "error",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "error"
+            }
+          }
+        },
+        {
+          "capabilityId": "battery",
+          "subscribe": {
+            "topic": "thingstalk/whale/whale-01/state",
+            "qos": 1,
+            "payload": {
+              "formatId": "mqttState",
+              "fieldId": "battery"
+            }
+          }
+        },
+        {
+          "capabilityId": "greet",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/greet",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "greetMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "joke",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/joke",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "jokeMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "encourage",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/encourage",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "encourageMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "continue",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/continue",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "continueMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "compress",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/compress",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "compressMqtt"
+            }
+          }
+        },
+        {
+          "capabilityId": "forget",
+          "publish": {
+            "topic": "thingstalk/whale/whale-01/action/forget",
+            "qos": 0,
+            "retain": false,
+            "payload": {
+              "formatId": "forgetMqtt"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "setupPanels": [
+    {
+      "id": "wifiSetup",
+      "title": "Wi-Fi 设置",
+      "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "Wi-Fi",
+          "fields": [
+            {
+              "id": 1,
+              "label": "SSID",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c53a007-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 2,
+              "label": "Wi-Fi 密码",
+              "maxBytes": 64,
+              "secret": true,
+              "rule": "WIFI_PSK"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mqttSetup",
+      "title": "MQTT 设置",
+      "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 2,
+          "title": "MQTT",
+          "fields": [
+            {
+              "id": 3,
+              "label": "Broker URI",
+              "maxBytes": 192,
+              "minBytes": 1,
+              "readUuid": "5c53a008-7d8a-4b19-9c63-414950415353",
+              "rule": "MQTT_URI"
+            },
+            {
+              "id": 4,
+              "label": "用户名",
+              "maxBytes": 64,
+              "readUuid": "5c53a009-7d8a-4b19-9c63-414950415353"
+            },
+            {
+              "id": 5,
+              "label": "MQTT 密码",
+              "maxBytes": 128,
+              "secret": true
+            },
+            {
+              "id": 6,
+              "label": "设备名称",
+              "maxBytes": 32,
+              "minBytes": 1,
+              "readUuid": "5c53a00a-7d8a-4b19-9c63-414950415353",
+              "rule": "IDENTIFIER",
+              "defaultValue": "whale-01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aiSetup",
+      "title": "DeepSeek API Key",
+      "instructions": "长按硬件 UP 开启设置窗口并完成配对。只需填写 DeepSeek 官方 API Key；接口、模型由固件固定。保存后不会自动发起付费请求。",
+      "protocol": "BLE_AI_SETTINGS_V1",
+      "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
+      "commandUuid": "5c53a00c-7d8a-4b19-9c63-414950415353",
+      "statusUuid": "5c53a00d-7d8a-4b19-9c63-414950415353",
+      "sections": [
+        {
+          "id": 1,
+          "title": "AI",
+          "fields": [
+            {
+              "id": 1,
+              "label": "HTTPS 完整接口地址",
+              "minBytes": 1,
+              "maxBytes": 192,
+              "readUuid": "5c53a00e-7d8a-4b19-9c63-414950415353",
+              "defaultValue": "https://api.deepseek.com/chat/completions",
+              "readOnly": true
+            },
+            {
+              "id": 2,
+              "label": "API Key",
+              "maxBytes": 192,
+              "secret": true
+            },
+            {
+              "id": 3,
+              "label": "模型名称",
+              "minBytes": 1,
+              "maxBytes": 64,
+              "readUuid": "5c53a00f-7d8a-4b19-9c63-414950415353",
+              "defaultValue": "deepseek-flash",
+              "readOnly": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

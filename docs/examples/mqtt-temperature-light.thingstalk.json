@@ -29,6 +29,12 @@
       "id": "locate",
       "label": "定位一次",
       "type": "ACTION"
+    },
+    {
+      "id": "message",
+      "label": "发送文本",
+      "type": "TEXT",
+      "maxBytes": 64
     }
   ],
   "widgets": [
@@ -61,6 +67,12 @@
       "type": "BUTTON",
       "label": "定位一次",
       "capabilityId": "locate"
+    },
+    {
+      "id": "messageInput",
+      "type": "TEXT_INPUT",
+      "label": "发送文本",
+      "capabilityId": "message"
     }
   ],
   "payloadFormats": [
@@ -114,6 +126,17 @@
           "id": "locate",
           "codec": "BOOLEAN",
           "defaultValue": "true"
+        }
+      ]
+    },
+    {
+      "id": "messageCommand",
+      "label": "文本命令",
+      "encoding": "JSON",
+      "fields": [
+        {
+          "id": "text",
+          "codec": "UTF8"
         }
       ]
     }
@@ -175,6 +198,16 @@
         "qos": 1,
         "payload": {
           "formatId": "locateCommand"
+        }
+      }
+    },
+    {
+      "capabilityId": "message",
+      "publish": {
+        "topic": "thingstalk/lamp-01/message",
+        "payload": {
+          "formatId": "messageCommand",
+          "fieldId": "text"
         }
       }
     }

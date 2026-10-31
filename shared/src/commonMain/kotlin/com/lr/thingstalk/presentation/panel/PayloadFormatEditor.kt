@@ -151,13 +151,13 @@ private fun PayloadFieldEditor(
     OutlinedTextField(field.id, { onChange(field.copy(id = it)) }, label = { Text(tr(AppStrings.field_id_204aa4)) },
         enabled = !inUse, isError = !payloadIdentifier.matches(field.id), singleLine = true,
         supportingText = { Text(if (inUse) tr(AppStrings.this_field_is_bound_to_a_widget_remove_references_befor_b7da21) else tr(AppStrings.json_uses_this_id_as_the_key_a9460a)) }, modifier = Modifier.fillMaxWidth())
-    val types = numericPanelCodecs.toList() + CodecType.BOOLEAN
+    val types = numericPanelCodecs.toList() + listOf(CodecType.BOOLEAN, CodecType.UTF8)
     PanelPicker(tr(AppStrings.field_data_type_632ef0), types.map { it.name to it.payloadTypeLabel() }, field.codec.name) { value ->
         val selected = CodecType.valueOf(value)
         onChange(field.copy(codec = selected,
-            byteOrder = if (selected in setOf(CodecType.BOOLEAN, CodecType.UINT8, CodecType.INT8)) PanelByteOrder.LITTLE_ENDIAN else field.byteOrder,
-            scale = if (selected == CodecType.BOOLEAN) 1.0 else field.scale,
-            bias = if (selected == CodecType.BOOLEAN) 0.0 else field.bias,
+            byteOrder = if (selected in setOf(CodecType.BOOLEAN, CodecType.UTF8, CodecType.UINT8, CodecType.INT8)) PanelByteOrder.LITTLE_ENDIAN else field.byteOrder,
+            scale = if (selected in listOf(CodecType.BOOLEAN, CodecType.UTF8)) 1.0 else field.scale,
+            bias = if (selected in listOf(CodecType.BOOLEAN, CodecType.UTF8)) 0.0 else field.bias,
             falseHex = if (selected == CodecType.BOOLEAN && field.codec == CodecType.BOOLEAN) field.falseHex else "00",
             trueHex = if (selected == CodecType.BOOLEAN && field.codec == CodecType.BOOLEAN) field.trueHex else "01"))
     }
@@ -173,7 +173,7 @@ private fun PayloadFieldEditor(
             OutlinedTextField(field.trueHex, { onChange(field.copy(trueHex = it)) }, label = { Text("True HEX") }, singleLine = true,
                 isError = !validBindingHex(field.trueHex, 1, 32), modifier = Modifier.fillMaxWidth())
             Text(tr(AppStrings.true_and_false_byte_sequences_must_have_equal_lengths_a_620492), color = Muted, style = MaterialTheme.typography.bodySmall)
-        } else key(field.codec) {
+        } else if (field.codec != CodecType.UTF8) key(field.codec) {
             var scale by remember { mutableStateOf(field.scale.takeIf { it.isFinite() }?.toString().orEmpty()) }
             var bias by remember { mutableStateOf(field.bias.takeIf { it.isFinite() }?.toString().orEmpty()) }
             Text(tr(AppStrings.displayed_value_raw_value_scale_offset_writes_apply_the_8f9580), color = Muted, style = MaterialTheme.typography.bodySmall)
@@ -187,15 +187,17 @@ private fun PayloadFieldEditor(
             }, label = { Text(tr(AppStrings.offset_6f0fb1)) }, singleLine = true, isError = bias.toDoubleOrNull()?.isFinite() != true, modifier = Modifier.fillMaxWidth())
         }
     }
+    if (field.codec == CodecType.UTF8) Text(tr(AppStrings.text_format_help), color = Muted)
     OutlinedTextField(field.defaultValue.orEmpty(), { onChange(field.copy(defaultValue = it.takeIf(String::isNotBlank))) },
         label = { Text(tr(AppStrings.default_write_value_optional_8eb284)) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-        supportingText = { Text(if (field.codec == CodecType.BOOLEAN) tr(AppStrings.enter_true_or_false_all_action_fields_and_other_fields_541fbc) else tr(AppStrings.enter_the_converted_value_all_action_fields_and_other_f_4bd7fe)) })
+        supportingText = { Text(if (field.codec == CodecType.BOOLEAN) tr(AppStrings.enter_true_or_false_all_action_fields_and_other_fields_541fbc) else if (field.codec == CodecType.UTF8) tr(AppStrings.text_format_help) else tr(AppStrings.enter_the_converted_value_all_action_fields_and_other_f_4bd7fe)) })
     TextButton(onClick = onRemove, enabled = !inUse) { Text(tr(AppStrings.delete_field_b89c9c)) }
 }
 
 private val payloadIdentifier = Regex("[A-Za-z][A-Za-z0-9_.-]{0,63}")
 private fun PayloadField.hasDefaultBinaryParameters(): Boolean = byteOrder == PanelByteOrder.LITTLE_ENDIAN && scale == 1.0 && bias == 0.0 && falseHex == "00" && trueHex == "01"
 private fun CodecType.payloadTypeLabel(): String = when (this) {
+    CodecType.UTF8 -> "UTF-8"
     CodecType.BOOLEAN -> tr(AppStrings.boolean_911f33)
     CodecType.FLOAT32 -> tr(AppStrings.float32_floating_point_297f86)
     else -> name
