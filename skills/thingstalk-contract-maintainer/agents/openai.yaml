@@ -1,0 +1,4 @@
+interface:
+  display_name: "ThingsTalk 客户端契约维护"
+  short_description: "在客户端开发任务中同步硬件接入规范、示例、独立 Prompt 和兼容快照"
+  default_prompt: "使用 $thingstalk-contract-maintainer 核对这次客户端能力变更，同步硬件接入契约、示例、Prompt 和兼容快照。"

@@ -1362,4 +1362,8 @@ Characteristic %2$s</string>
   <string name="text_framing">Text payload header or trailer does not match</string>
   <string name="text_json_string">Text fields must be JSON strings</string>
   <string name="text_no_hex_field">%1$s does not support HEX fields</string>
+  <string name="retired_page_title">Page unavailable</string>
+  <string name="retired_page_description">This page was removed or is not supported by this version. Return to your devices.</string>
+  <string name="message_setup_v2_invalid_status">Invalid status payload. Expected all 16 bytes of protocol v2; check firmware and panel compatibility.</string>
+  <string name="message_setup_missing_saved_section">The receipt did not mark the target section as saved. Read the status again; no automatic retry.</string>
 </resources>

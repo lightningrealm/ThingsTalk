@@ -37,7 +37,7 @@ class InMemoryBleTraffic(
     ) {
         // Store immutable text, never the caller's reusable byte buffer. Keep both memory bounds explicit.
         protectedPaths.update { it + sensitiveProvider().map(::path) }
-        val sensitive = MuyuProvisioning.sensitive(characteristic) || (characteristic != null && path(characteristic) in protectedPaths.value)
+        val sensitive = characteristic != null && path(characteristic) in protectedPaths.value
         val payload = if (sensitive) null else bytes?.copyOf()
         val entry = BleTrafficEntry(
             id = nextId.updateAndGet { it + 1 },

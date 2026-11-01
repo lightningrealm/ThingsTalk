@@ -28,7 +28,8 @@
 - `androidApp/`、`iosApp/`：平台入口与应用资源。
 - `assets/branding/vector-v2/`：应用图标的可编辑 SVG 源文件。
 - `docs/`：使用说明、架构、协议和示例，见[文档索引](docs/README.md)。
-- `skills/thingstalk-ble-panel/`：随应用维护的[硬件开发 Skill](skills/thingstalk-ble-panel/SKILL.md) 和[独立 Prompt](skills/thingstalk-ble-panel/PROMPT.md)。
+- `skills/thingstalk-ble-panel/`：仅供硬件接入、对齐客户端已有标准的[硬件开发 Skill](skills/thingstalk-ble-panel/SKILL.md) 和[独立 Prompt](skills/thingstalk-ble-panel/PROMPT.md)。
+- `skills/thingstalk-contract-maintainer/`：[客户端契约维护 Skill](skills/thingstalk-contract-maintainer/SKILL.md)，不随硬件接入包分发。
 
 ## 贡献与验收
 

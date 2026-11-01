@@ -94,7 +94,7 @@ class ActivityMqttRepository(private val delegate: MqttRepository, scope: Corout
 
 class ActivitySetupSession(private val delegate: SetupPanelSession, private val journal: ActivityRepository,
     private val id: String, private val name: () -> String, private val form: SetupPanel) : SetupPanelSession by delegate {
-    override suspend fun submit(sectionId: Int, values: Map<Int, String>): NetworkSetupStatus {
+    override suspend fun submit(sectionId: Int, values: Map<Int, String>): SetupState {
         try {
             val status = delegate.submit(sectionId, values)
             journal.event(id, name(), "BLE", "设备配置已保存", "${form.sections.single { it.id == sectionId }.title}：设备已确认保存，不代表网络已连接")

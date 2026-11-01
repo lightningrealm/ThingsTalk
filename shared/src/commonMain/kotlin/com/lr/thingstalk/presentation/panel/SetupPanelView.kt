@@ -45,8 +45,8 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
     suspend fun reload() {
         val status = session.status()
         unlocked = status.unlocked
-        savedPasswords = definition.savedSecretIds(status)
-        unsavedSections = definition.sections.filter { !definition.isSectionSaved(status, it.id) }.map { it.id }.toSet()
+        savedPasswords = status.savedSecretFieldIds
+        unsavedSections = definition.sections.filter { it.id !in status.savedSectionIds }.map { it.id }.toSet()
         if (status.unlocked) { inputs = definition.initialInputs(session.readValues(), unsavedSections); loaded = true }
     }
     Text(when {
@@ -82,7 +82,7 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
         else OutlinedTextField(inputs[field.id].orEmpty(), { inputs = inputs + (field.id to it) },
             label = { Text(field.label) }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !busy && loaded,
             visualTransformation = if (field.secret) PasswordVisualTransformation() else VisualTransformation.None)
-        field.defaultValue?.takeIf { definition.protocol == SetupProtocol.BLE_CHUNKED_SETTINGS_V1 }?.let { expected ->
+        field.defaultValue?.takeIf { !definition.protocol.isAi }?.let { expected ->
             Text(tr(AppStrings.panel_suggestion_for_keep_it_consistent_with_the_device_f7aabf, field.label, expected), color = Muted, style = MaterialTheme.typography.bodySmall)
             if (loaded && inputs[field.id] != expected) {
                 Text(tr(AppStrings.this_value_differs_from_the_panel_suggestion_the_device_66eeb1), color = MaterialTheme.colorScheme.error)
@@ -108,8 +108,8 @@ private fun SetupForm(definition: SetupPanel, session: SetupPanelSession) {
         scope.launch {
             try {
                 val result = session.submit(section.id, values)
-                savedPasswords = definition.savedSecretIds(result)
-                unsavedSections = unsavedSections - section.id; message = if (definition.protocol == SetupProtocol.BLE_AI_SETTINGS_V1) tr(AppStrings.ai_setup_saved) else tr(AppStrings.device_confirmed_saving_this_does_not_confirm_network_c_4349b6) }
+                savedPasswords = result.savedSecretFieldIds
+                unsavedSections = definition.sections.filter { it.id !in result.savedSectionIds }.map { it.id }.toSet(); message = if (definition.protocol.isAi) tr(AppStrings.ai_setup_saved) else tr(AppStrings.device_confirmed_saving_this_does_not_confirm_network_c_4349b6) }
             catch (timeout: TimeoutCancellationException) { message = tr(AppStrings.save_result_unknown_read_back_to_verify_no_automatic_re_a1c190) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (failure: SetupPanelFailure) {

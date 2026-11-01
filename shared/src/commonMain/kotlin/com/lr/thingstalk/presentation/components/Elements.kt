@@ -14,8 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.lr.thingstalk.presentation.theme.*
@@ -102,22 +100,6 @@ fun Choices(values: List<String>, selected: String, select: (String) -> Unit) {
 @Composable
 fun Primary(label: String, enabled: Boolean = true, action: () -> Unit) {
     Button(onClick = action, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(16.dp)) { Text(label) }
-}
-
-@Composable
-fun Trend() {
-    val gridColor = Line
-    val trendColor = Accent
-    val points = listOf(.5f, .54f, .47f, .61f, .58f, .7f, .65f, .62f, .74f, .69f, .8f, .76f)
-    Canvas(Modifier.fillMaxWidth().height(112.dp).semantics { contentDescription = tr(AppStrings.simulated_humidity_trend_gradually_rising_from_45_to_52_47c5aa) }) {
-        repeat(3) { i -> val y = size.height * (i + 1) / 4; drawLine(gridColor, Offset(0f, y), Offset(size.width, y), 1f) }
-        val path = Path()
-        points.forEachIndexed { i, v -> val x = size.width * i / (points.size - 1); val y = size.height * (1 - v); if (i == 0) path.moveTo(x, y) else path.lineTo(x, y) }
-        drawPath(path, trendColor, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-    }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        listOf("00:00", "06:00", "12:00", "18:00").forEach { Text(it, color = Muted, style = MaterialTheme.typography.labelSmall) }
-    }
 }
 
 /** Small line icons share one visual language and need no platform icon dependency. */

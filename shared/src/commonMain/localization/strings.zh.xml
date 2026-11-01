@@ -1362,4 +1362,8 @@
   <string name="text_framing">文本报文帧头或帧尾不匹配</string>
   <string name="text_json_string">文本字段必须为 JSON 字符串</string>
   <string name="text_no_hex_field">%1$s 不支持 HEX 字段</string>
+  <string name="retired_page_title">页面已移除</string>
+  <string name="retired_page_description">该页面已移除或当前版本不支持，请返回设备列表。</string>
+  <string name="message_setup_v2_invalid_status">设备状态报文无效，需为协议 v2 的完整 16 字节；请核对固件与面板协议。</string>
+  <string name="message_setup_missing_saved_section">保存回执未标记目标分组已保存；请重读状态，不会自动重发。</string>
 </resources>

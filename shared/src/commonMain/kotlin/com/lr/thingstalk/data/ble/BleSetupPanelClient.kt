@@ -9,30 +9,42 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 /** No credential persistence, traffic logging, reconnect or automatic replay. */
 class BleSetupPanelClient(private val connection: BleConnection, private val definition: SetupPanel, private val mutex: Mutex = Mutex()) : SetupPanelSession {
     init { require(validateSetupPanels(listOf(definition)).isEmpty()) }
     private var sequence = Random.nextInt(1, 65535)
-    override suspend fun status(): NetworkSetupStatus = mutex.withLock { withTimeout(5_000) { readStatus() } }
-    private suspend fun readStatus(): NetworkSetupStatus {
+    override suspend fun status(): SetupState = mutex.withLock { withTimeout(5_000.milliseconds) { readStatus().state } }
+    private suspend fun readStatus(): SetupReceipt {
         val bytes = try { connection.read(definition.status) }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { throw SetupPanelFailure(SetupFailureKind.STATUS_READ, "BLE 状态读取失败，无法确认设备处理结果；请检查连接后重读状态。") }
-        return try { ChunkedBleSettingsProtocol.parse(bytes) }
-        catch (_: IllegalArgumentException) { throw SetupPanelFailure(SetupFailureKind.INVALID_STATUS, "设备状态报文无效，需为协议 v1 的完整 14 字节；请核对固件与面板协议。") }
+        return try {
+            val decoded = if (definition.protocol.isLegacy) ChunkedBleSettingsProtocol.parseLegacy(bytes, definition.protocol.isAi)
+                else ChunkedBleSettingsProtocol.parse(bytes)
+            decoded.also { receipt ->
+                // A device may expose only a subset of its standard fields in this panel.
+                val ai = definition.protocol.isAi
+                require(receipt.state.savedSectionIds.all { it in if (ai) setOf(1) else setOf(1, 2) })
+                require(receipt.state.savedSecretFieldIds.all { it in if (ai) setOf(2) else setOf(2, 5) })
+            }
+        }
+        catch (_: IllegalArgumentException) { throw SetupPanelFailure(SetupFailureKind.INVALID_STATUS, if (definition.protocol.isLegacy)
+            "设备状态报文无效，需为协议 v1 的完整 14 字节；请核对固件与面板协议。"
+            else "设备状态报文无效，需为协议 v2 的完整 16 字节；请核对固件与面板协议。") }
     }
     override suspend fun readValues(): Map<Int, String> = mutex.withLock {
-        withTimeout(60_000) {
+        withTimeout(60_000.milliseconds) {
             val status = readStatus()
-            require(status.unlocked) { "请先按设备说明开启设置窗口" }
+            require(status.state.unlocked) { "请先按设备说明开启设置窗口" }
             require(definition.sections.flatMap { it.fields }.any { it.readUuid != null }) {
                 "设置面板未声明读取特征，无法在保存前准备访问；请补充固件提供的加密 readUuid。"
             }
             buildMap {
                 for (section in definition.sections) for (field in section.fields) {
                     if (field.secret) continue
-                    val saved = definition.isSectionSaved(status, section.id)
+                    val saved = section.id in status.state.savedSectionIds
                     val id = definition.readId(field)
                     if (id == null) { if (!saved) put(field.id, ""); continue }
                     // Even an unconfigured field must be accessed before opening the editor:
@@ -56,8 +68,8 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
                 val awaitingSecurity = diagnostic == "CBATTErrorDomain / code=5" || diagnostic == "CBATTErrorDomain / code=15"
                 if (awaitingSecurity && attempt < 14) {
                     // Only recheck a read. Never replay BEGIN/APPEND/COMMIT after pairing.
-                    delay(2_000)
-                    require(readStatus().unlocked) { "设备设置窗口已关闭，请重新开启后准备" }
+                    delay(2_000.milliseconds)
+                    require(readStatus().state.unlocked) { "设备设置窗口已关闭，请重新开启后准备" }
                 } else {
                     throw SetupPanelFailure(SetupFailureKind.PREPARE_READ,
                         if (awaitingSecurity) "设备仍拒绝加密读取：$diagnostic。即使已确认配对，当前访问权限仍未通过；请检查固件加密状态。尚未发送配置命令。"
@@ -68,7 +80,7 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
         error("Unreachable")
     }
 
-    override suspend fun submit(sectionId: Int, values: Map<Int, String>): NetworkSetupStatus {
+    override suspend fun submit(sectionId: Int, values: Map<Int, String>): SetupState {
         val section = definition.sections.single { it.id == sectionId }
         require(values.keys.all { id -> section.fields.any { it.id == id } }) { "包含未定义的字段" }
         section.fields.forEach { field ->
@@ -77,13 +89,13 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
             if (value != null) field.validateValue(value)
             require(!field.readOnly || value == field.defaultValue) { "固定服务参数不能修改" }
         }
-        return save(sectionId, values)
+        return save(sectionId, values).state
     }
-    private suspend fun save(section: Int, fields: Map<Int, String>): NetworkSetupStatus = mutex.withLock {
+    private suspend fun save(section: Int, fields: Map<Int, String>): SetupReceipt = mutex.withLock {
         require(fields.values.none { '\u0000' in it }) { "字段不能包含 NUL" }
-        withTimeout(90_000) {
+        withTimeout(90_000.milliseconds) {
             val initial = readStatus()
-            require(initial.unlocked) { "请先按设备说明开启设置窗口" }
+            require(initial.state.unlocked) { "请先按设备说明开启设置窗口" }
             sequence = initial.request // Next ID cannot match the device's last acknowledgement.
             val size = minOf(14, connection.maximumWriteLength(BleWriteMode.WITH_RESPONSE) - 6)
             require(size > 0) { "当前 BLE 写入长度不足" }
@@ -100,15 +112,18 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
                     }
                 } finally { bytes.fill(0) }
             }
-            exchange(0xB3)
+            exchange(0xB3).also { receipt ->
+                if (!definition.protocol.isLegacy && section !in receipt.state.savedSectionIds)
+                    throw SetupPanelFailure(SetupFailureKind.ACK_MISMATCH, "保存回执未标记目标分组已保存；请重读状态，不会自动重发。", 0xB3, receipt.request, receipt)
+            }
         }
     }
-    private suspend fun exchange(op: Int, field: Int = 0, offset: Int = 0, payload: ByteArray = byteArrayOf()): NetworkSetupStatus {
+    private suspend fun exchange(op: Int, field: Int = 0, offset: Int = 0, payload: ByteArray = byteArrayOf()): SetupReceipt {
         sequence = (sequence + 1) and 65535
         val expected = sequence
         val packet = ChunkedBleSettingsProtocol.packet(op, expected, field, offset, payload)
         try {
-            val written = withTimeoutOrNull(30_000) {
+            val written = withTimeoutOrNull(30_000.milliseconds) {
                 connection.write(definition.command, packet, BleWriteMode.WITH_RESPONSE)
                 true
             }
@@ -122,14 +137,14 @@ class BleSetupPanelClient(private val connection: BleConnection, private val def
                 "BLE 写入失败，尚未取得固件回执。$diagnostic。不会自动重发。", op, expected)
         }
         finally { packet.fill(0) }
-        var lastReply: NetworkSetupStatus? = null
-        return withTimeoutOrNull(15_000) {
-            var result: NetworkSetupStatus
+        var lastReply: SetupReceipt? = null
+        return withTimeoutOrNull(15_000.milliseconds) {
+            var result: SetupReceipt
             while (true) {
                 result = readStatus()
                 lastReply = result
                 if (result.request == expected && result.opcode == op) break
-                delay(75)
+                delay(75.milliseconds)
             }
             val expectedCode = if (op == 0xB3) 2 else 1
             if (result.result != expectedCode) throw SetupPanelFailure(SetupFailureKind.REJECTED, when (result.result) {

@@ -16,12 +16,30 @@ class HardwareSkillContractTest {
     private val vectors = Json.parseToJsonElement(File(assets, "wire-vectors.json").readText()).jsonObject
     private val inspector = DefaultPayloadInspector()
 
+    @Test fun publishedSetupStatusVectorsMatchBothProtocolVersions() {
+        val vectors = Json.parseToJsonElement(File(assets, "setup-status-vectors.json").readText()).jsonObject
+        fun decode(vector: JsonObject): com.lr.thingstalk.domain.ble.SetupReceipt {
+            val protocol = SetupProtocol.valueOf(vector.getValue("protocol").jsonPrimitive.content)
+            val bytes = vector.getValue("hex").jsonPrimitive.content.split(" ").map { it.toInt(16).toByte() }.toByteArray()
+            return if (protocol.isLegacy) com.lr.thingstalk.domain.ble.ChunkedBleSettingsProtocol.parseLegacy(bytes, protocol.isAi)
+                else com.lr.thingstalk.domain.ble.ChunkedBleSettingsProtocol.parse(bytes)
+        }
+        vectors.getValue("valid").jsonArray.forEach {
+            val v = it.jsonObject
+            val state = decode(v).state
+            assertEquals(v.getValue("unlocked").jsonPrimitive.boolean, state.unlocked)
+            assertEquals(v.getValue("sections").jsonArray.map { it.jsonPrimitive.int }.toSet(), state.savedSectionIds)
+            assertEquals(v.getValue("secrets").jsonArray.map { it.jsonPrimitive.int }.toSet(), state.savedSecretFieldIds)
+        }
+        vectors.getValue("invalid").jsonArray.forEach { v -> assertFailsWith<IllegalArgumentException> { decode(v.jsonObject) } }
+    }
+
     @Test fun aiSetupExampleImportsOnMobileAndProjectsToMqttOnWeb() {
         val source = File(assets, "ai-setup.thingstalk.json").readText()
         val mobile = com.lr.thingstalk.presentation.panel.preparePanelImport(source, bleAvailable = true)
         assertEquals(14, mobile.panel.widgets.size)
         assertEquals(3, mobile.panel.setupPanels.size)
-        assertEquals(SetupProtocol.BLE_AI_SETTINGS_V1, mobile.panel.setupPanels.last().protocol)
+        assertEquals(SetupProtocol.BLE_AI_SETTINGS_V2, mobile.panel.setupPanels.last().protocol)
         assertEquals(mobile.panel, PanelJson.decode(PanelJson.encode(mobile.panel)))
         val web = com.lr.thingstalk.presentation.panel.preparePanelImport(source, bleAvailable = false)
         assertTrue(web.mqttOnly)

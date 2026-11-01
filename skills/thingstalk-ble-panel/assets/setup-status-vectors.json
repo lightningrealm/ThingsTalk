@@ -1,0 +1,91 @@
+{
+  "valid": [
+    {
+      "name": "v2 unconfigured",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "unlocked": true,
+      "sections": [],
+      "secrets": []
+    },
+    {
+      "name": "v2 network saved",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 34 12 B3 02 00 00 00 04 03 02 01 03 12",
+      "unlocked": true,
+      "sections": [
+        1,
+        2
+      ],
+      "secrets": [
+        2,
+        5
+      ]
+    },
+    {
+      "name": "v2 ai saved",
+      "protocol": "BLE_AI_SETTINGS_V2",
+      "hex": "D1 02 01 34 12 B3 02 00 00 00 04 03 02 01 01 02",
+      "unlocked": true,
+      "sections": [
+        1
+      ],
+      "secrets": [
+        2
+      ]
+    },
+    {
+      "name": "v1 network",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "hex": "D1 01 7F 34 12 B3 02 00 00 00 04 03 02 01",
+      "unlocked": true,
+      "sections": [
+        1,
+        2
+      ],
+      "secrets": [
+        2,
+        5
+      ]
+    },
+    {
+      "name": "v1 ai",
+      "protocol": "BLE_AI_SETTINGS_V1",
+      "hex": "D1 01 29 34 12 B3 02 00 00 00 04 03 02 01",
+      "unlocked": true,
+      "sections": [
+        1
+      ],
+      "secrets": [
+        2
+      ]
+    }
+  ],
+  "invalid": [
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 01 79 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "V1 cannot be used by V2"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "V2 cannot be used by V1"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 03 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "reserved flags"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 04 00",
+      "reason": "unknown section"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 80",
+      "reason": "unknown field"
+    }
+  ]
+}

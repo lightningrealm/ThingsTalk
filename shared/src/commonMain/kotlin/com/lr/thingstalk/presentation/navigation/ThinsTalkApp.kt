@@ -30,11 +30,9 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.lr.thingstalk.presentation.components.*
-import com.lr.thingstalk.presentation.mock.*
 import com.lr.thingstalk.presentation.panel.*
 import com.lr.thingstalk.presentation.theme.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 
 @Composable
 fun ThinsTalkApp() {
@@ -78,23 +76,10 @@ private fun DeviceWorkspaceApp(
     activity: ActivityRepository,
 ) {
     val stack = rememberNavBackStack(navigationConfig, Route(Screen.DEVICES))
-    val session = viewModel { MockSession() }
     val inspector = remember { createPayloadInspector() }
     var pendingNavigation by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pendingEditor by remember { mutableStateOf<PanelEditorViewModel?>(null) }
     val devices by workspace.devices.collectAsState()
-    LaunchedEffect(session.scanning) {
-        if (session.scanning) { delay(900); session.scanFinished = true; session.scanning = false }
-    }
-    LaunchedEffect(session.observing, session.connected) {
-        while (session.observing && session.connected) {
-            delay(1500)
-            session.notificationCount++
-            session.lastValue = if (session.notificationTarget == "battery") "64" else
-                "01 18 ${(50 + session.notificationCount % 10).toString(16).uppercase()}"
-            session.log("RX notify ${session.lastValue}")
-        }
-    }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val message: (String) -> Unit = { scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(it) } }
@@ -160,7 +145,7 @@ private fun DeviceWorkspaceApp(
             Screen.DEVICES, Screen.DEVICE, Screen.DEVELOPER_SETTINGS, Screen.DEVICE_DEVELOPER, Screen.PANEL_EDITOR, Screen.DESCRIPTION, Screen.BLE_LOG_DEVICES -> tr(AppStrings.local_custom_89a99d)
             Screen.EVENTS, Screen.EVENT, Screen.ACTIVITY_RECORD -> tr(AppStrings.local_activity_32af60)
             Screen.MORE, Screen.SUBSCRIPTIONS, Screen.SUBSCRIPTION, Screen.DATA_SETTINGS, Screen.PRESETS, Screen.PRESET, Screen.TRANSFER, Screen.API, Screen.NOTIFICATIONS, Screen.ABOUT, Screen.LICENSES -> tr(AppStrings.local_workspace_82cc95)
-            else -> tr(AppStrings.mock_demo_7379fe)
+            Screen.UNAVAILABLE -> tr(AppStrings.local_workspace_82cc95)
         },
         destinations = destinations,
         selected = root,
@@ -209,17 +194,6 @@ private fun DeviceWorkspaceApp(
                                     profileId = destination.profileId,
                                     initialEndpoint = devices.firstOrNull { it.id == destination.id }?.mqttEndpoint.orEmpty(),
                                     onSaved = back)
-                                destination.screen in listOf(Screen.DEMO_DEVICE, Screen.DEMO_DESCRIPTION) -> DevicePages(
-                                    destination.copy(screen = if (destination.screen == Screen.DEMO_DEVICE) Screen.DEVICE else Screen.DESCRIPTION),
-                                    session,
-                                    go = { target ->
-                                        go(when (target.screen) {
-                                            Screen.DEVICE -> target.copy(screen = Screen.DEMO_DEVICE)
-                                            Screen.DESCRIPTION -> target.copy(screen = Screen.DEMO_DESCRIPTION)
-                                            else -> target
-                                        })
-                                    }, message = message,
-                                )
                                 destination.screen == Screen.DEVICES -> DeviceListPage(workspace, bleAvailable = capabilities.ble, initiallyCreating = destination.id == "create",
                                     onOpen = { go(Route(Screen.DEVICE, it)) }, onScan = { go(Route(Screen.NEARBY)) })
                                 destination.screen == Screen.DEVELOPER_SETTINGS -> Page("DEVELOPER SETTINGS", tr(AppStrings.protocol_and_panel_623472), tr(AppStrings.choose_a_device_to_define_payloads_bind_widgets_or_impo_92aad8)) {
@@ -297,10 +271,8 @@ private fun DeviceWorkspaceApp(
                                         )
                                     }
                                 }
-                                else -> when (destination.screen) {
-                                    Screen.DEVICES, Screen.DEVICE, Screen.DESCRIPTION, Screen.HISTORY, Screen.COMMANDS, Screen.COMMAND -> DevicePages(destination, session, go, message)
-                                    Screen.NEARBY, Screen.BLE, Screen.SERVICES, Screen.CHARACTERISTIC, Screen.LOGS -> BlePages(destination, session, go, message)
-                                    else -> WorkspacePages(destination, session, go, message)
+                                else -> Page("WORKSPACE", tr(AppStrings.retired_page_title), tr(AppStrings.retired_page_description)) {
+                                    Primary(tr(AppStrings.back_to_my_devices_9058be)) { go(Route(Screen.DEVICES)) }
                                 }
                             }
                         }

@@ -8,7 +8,8 @@ from pathlib import Path
 import re
 import sys
 
-BUNDLE = Path(__file__).resolve().parents[1]
+MAINTAINER = Path(__file__).resolve().parents[1]
+BUNDLE = MAINTAINER.parent / 'thingstalk-ble-panel'
 BASE = 'shared/src/commonMain/kotlin/com/lr/thingstalk/'
 SOURCES = [BASE + p for p in (
     'domain/panel/PanelDefinition.kt', 'domain/panel/PayloadFormat.kt',
@@ -16,7 +17,6 @@ SOURCES = [BASE + p for p in (
     'presentation/panel/PanelTextInput.kt', 'presentation/panel/PayloadFormatEditor.kt',
     'presentation/panel/PanelBindingEditor.kt', 'presentation/panel/PanelBindingFormatFields.kt',
     'presentation/panel/MqttPanelBindingEditor.kt', 'data/panel/DefaultPayloadInspector.kt',
-    'domain/ble/MuyuProvisioning.kt', 'data/ble/MuyuProvisioningClient.kt',
     'data/ble/TracingBleConnection.kt', 'presentation/panel/SetupPanelView.kt',
     'domain/panel/SetupPanel.kt', 'domain/ble/ChunkedBleSettingsProtocol.kt', 'domain/ble/BleFailureDiagnostic.kt', 'data/ble/BleSetupPanelClient.kt',
     'presentation/device/DeviceWorkspaceViewModel.kt',
@@ -36,9 +36,9 @@ SOURCES = [BASE + p for p in (
     'presentation/panel/PanelViewModel.kt', 'presentation/panel/PanelStateSlices.kt', 'presentation/panel/PanelEditorViewModel.kt')]
 SOURCES += ['shared/src/' + platform + '/kotlin/com/lr/thingstalk/data/mqtt/MqttProfileStorage.' + suffix + '.kt'
             for platform, suffix in [('androidMain', 'android'), ('iosMain', 'ios'), ('wasmJsMain', 'wasmJs')]]
-CONTENTS = ['references/ble-network-provisioning.md', 'SKILL.md', 'references/contract.md', 'references/maintenance.md',
+CONTENTS = ['references/ble-network-provisioning.md', 'SKILL.md', 'references/contract.md', 'references/hardware-boundary.md', 'assets/setup-status-vectors.json',
             'agents/openai.yaml', 'assets/all-widgets.thingstalk.json', 'assets/wire-vectors.json',
-            'scripts/sync_contract.py', 'references/mqtt-dual.md',
+            'references/mqtt-dual.md',
             'assets/mqtt-all-widgets.thingstalk.json', 'assets/dual-power.thingstalk.json', 'assets/dual-channels.thingstalk.json', 'assets/setup-panel.thingstalk.json', 'assets/ai-setup.thingstalk.json']
 
 def digest(path):
@@ -56,7 +56,9 @@ def enums(root):
     return result
 
 def render(manifest):
-    contract = (BUNDLE / 'references/contract.md').read_text()
+    boundary = (BUNDLE / 'references/hardware-boundary.md').read_text()
+    contract = (BUNDLE / 'references/contract.md').read_text().replace(
+        '(ble-network-provisioning.md)', '(#v7-可配置设备设置面板)')
     example = (BUNDLE / 'assets/all-widgets.thingstalk.json').read_text()
     vectors = (BUNDLE / 'assets/wire-vectors.json').read_text()
     mqtt = (BUNDLE / 'references/mqtt-dual.md').read_text()
@@ -66,16 +68,19 @@ def render(manifest):
         ('旧 v5 混合路由示例', 'assets/dual-power.thingstalk.json'),
         ('v6 按通道定义完整示例', 'assets/dual-channels.thingstalk.json'),
         ('v7 设置表单示例', 'assets/setup-panel.thingstalk.json'),
-        ('v7 AI 设置表单示例', 'assets/ai-setup.thingstalk.json')])
+        ('v7 AI 设置表单示例', 'assets/ai-setup.thingstalk.json'),
+        ('设置状态协议测试向量（不可导入）', 'assets/setup-status-vectors.json')])
     return f'''# ThingsTalk 硬件开发配套 Prompt
 
 兼容快照：文档修订 {manifest['contractRevision']}，核对日期 {manifest['reviewedOn']}，面板版本 BLE {manifest['panelSchemaVersions']['BLE']} / MQTT {manifest['panelSchemaVersions']['MQTT']} / DUAL {manifest['panelSchemaVersions']['DUAL']}，设置面板 SETUP {manifest['panelSchemaVersions']['SETUP']}。
 这是一份可独立发送的 Prompt，不需要访问原 App 仓库。它描述核对时的实现，不能假设之后新增功能自动可用。
 
+{boundary}
+
 请为我指定的硬件能力，同时交付 BLE、MQTT 或双连接固件协议和 ThingsTalk 可导入的面板配置。按目标平台选择版本：Web 仅 MQTT 功能，推荐 v4；Android/iOS 可用 BLE v3、MQTT v4、DUAL v6（旧 v5 混合路由仍兼容）。需要 BLE 设置表单时使用 v7 setupPanels，按下文规范填写。
 先区分：普通控制面板用于日常读值和操作；设置面板 setupPanels 用于文本/密码及分组提交；App 本机 MQTT 连接配置由用户在连接库管理。
 普通组件与设置表单可在同一份设备 JSON、同一个展示页共存。不要生成 normalPanels、widget.type=SETUP 或 MQTT 设置提交等未实现结构/能力。
-先从我提供的固件/GATT/topic/需求中核实已有能力，区分事实、拟议设计和待确认事项。
+先核对目标客户端已支持的 panel/widget、设置协议、字段语义和版本，再从我提供的固件/GATT/topic/需求中核实硬件能力。硬件实现客户端标准；输出选用的组件/协议与硬件能力映射，区分事实、拟议设计和待确认事项。
 硬件接入必须使用下文已实现的 panel/widget 与设置协议。若需求需要新面板能力，严格执行“能力边界与扩展提示”：在最终输出正文明确提示“需要客户端扩展，当前不可直接使用”，说明缺口、替代方案及扩展内容；不将未支持部分混入可导入 JSON，也不静默省略需求。
 按下面的当前规范选择组件，产出完整的 `设备名.thingstalk.json`、能力到 GATT/topic/字段与双连接路由的映射表、固件收发说明和字节测试向量。
 配置中的 UUID、topic 与命令值必须与我的固件一致；下面示例只用于示范结构，不能当成我的实际设备。
@@ -85,7 +90,7 @@ def render(manifest):
 新需求若超出规范，明确列出需要的固件适配或App扩展，不通过自造JSON键绕过。
 MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地址、账号密码、Client ID 和配置 ID 不放进面板文件。
 
-我的硬件资料（由使用者补充）：芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、固件是否实现 BLE_CHUNKED_SETTINGS_V1 / BLE_AI_SETTINGS_V1、设置窗口/字段限制/配对要求。
+我的硬件资料（由使用者补充）：目标 App 版本/构建（未知则标注待验证）、芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、新接入按 BLE_CHUNKED_SETTINGS_V2 / BLE_AI_SETTINGS_V2 实现统一状态，维护现有 V1 固件则保留对应 V1 声明；不得只改枚举升级固件。固件协议版本、设置窗口/字段限制/配对要求。
 
 ---
 

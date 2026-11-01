@@ -1,12 +1,23 @@
 # ThingsTalk 硬件开发配套 Prompt
 
-兼容快照：文档修订 30，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
+兼容快照：文档修订 34，核对日期 2026-11-01，面板版本 BLE 3 / MQTT 4 / DUAL 6，设置面板 SETUP 7。
 这是一份可独立发送的 Prompt，不需要访问原 App 仓库。它描述核对时的实现，不能假设之后新增功能自动可用。
+
+## 任务边界与兼容目标
+
+ThingsTalk 客户端是既定的兼容目标。本任务只实现固件、设备配置、协议说明和测试向量。即使工作区包含客户端源码，也只能只读核对行为；不得修改客户端代码、测试、校验器、Skill 契约或兼容快照来适配硬件，不自动切换为客户端维护任务。
+
+先记录目标 App 版本/构建、目标平台、固件版本和本包 contractRevision。契约修订号、schemaVersion 和 App 版本不是同一个概念；快照不证明某个已发布 App 已包含这些能力。版本未知时标注“目标版本兼容性待验证”，可以按本契约设计，但不能宣称目标 App 已验证可用。发现源码与契约冲突时报告差异，不自行刷新契约。
+
+需求应映射到已有 widget、SetupProtocol、固定字段语义和报文规则。不得添加枚举/JSON 键、重新解释固定字段或放宽校验来绕过限制。缺口须在最终输出以“需要客户端扩展，当前不可直接使用”明确列出需求、限制、已有能力替代方案及未交付部分；仅报告扩展需求，不实施客户端扩展。可交付已支持的子集，但不能静默丢弃需求或将未支持部分混入配置。
+
+交付配置属于硬件项目；本包规范、示例和快照是只读参考。示例 UUID/topic 不是目标设备事实。只有在目标客户端实际验证后，才报告导入和通信通过；修改另一个客户端后通过不构成目标版本兼容证明。
+
 
 请为我指定的硬件能力，同时交付 BLE、MQTT 或双连接固件协议和 ThingsTalk 可导入的面板配置。按目标平台选择版本：Web 仅 MQTT 功能，推荐 v4；Android/iOS 可用 BLE v3、MQTT v4、DUAL v6（旧 v5 混合路由仍兼容）。需要 BLE 设置表单时使用 v7 setupPanels，按下文规范填写。
 先区分：普通控制面板用于日常读值和操作；设置面板 setupPanels 用于文本/密码及分组提交；App 本机 MQTT 连接配置由用户在连接库管理。
 普通组件与设置表单可在同一份设备 JSON、同一个展示页共存。不要生成 normalPanels、widget.type=SETUP 或 MQTT 设置提交等未实现结构/能力。
-先从我提供的固件/GATT/topic/需求中核实已有能力，区分事实、拟议设计和待确认事项。
+先核对目标客户端已支持的 panel/widget、设置协议、字段语义和版本，再从我提供的固件/GATT/topic/需求中核实硬件能力。硬件实现客户端标准；输出选用的组件/协议与硬件能力映射，区分事实、拟议设计和待确认事项。
 硬件接入必须使用下文已实现的 panel/widget 与设置协议。若需求需要新面板能力，严格执行“能力边界与扩展提示”：在最终输出正文明确提示“需要客户端扩展，当前不可直接使用”，说明缺口、替代方案及扩展内容；不将未支持部分混入可导入 JSON，也不静默省略需求。
 按下面的当前规范选择组件，产出完整的 `设备名.thingstalk.json`、能力到 GATT/topic/字段与双连接路由的映射表、固件收发说明和字节测试向量。
 配置中的 UUID、topic 与命令值必须与我的固件一致；下面示例只用于示范结构，不能当成我的实际设备。
@@ -16,13 +27,13 @@
 新需求若超出规范，明确列出需要的固件适配或App扩展，不通过自造JSON键绕过。
 MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地址、账号密码、Client ID 和配置 ID 不放进面板文件。
 
-我的硬件资料（由使用者补充）：芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、固件是否实现 BLE_CHUNKED_SETTINGS_V1 / BLE_AI_SETTINGS_V1、设置窗口/字段限制/配对要求。
+我的硬件资料（由使用者补充）：目标 App 版本/构建（未知则标注待验证）、芯片/SDK、目标平台、已有 GATT/topic 与协议、Broker WS/WSS 入口与认证要求（不提供真实密码）、需要展示/控制的能力、单位/范围/精度、通知时机、固件版本；是否需要设备设置表单、新接入按 BLE_CHUNKED_SETTINGS_V2 / BLE_AI_SETTINGS_V2 实现统一状态，维护现有 V1 固件则保留对应 V1 声明；不得只改枚举升级固件。固件协议版本、设置窗口/字段限制/配对要求。
 
 ---
 
 # 当前硬件接入契约
 
-此规范描述当前实现，不是未来路线图。兼容快照版本与核对日期见 compatibility.json。
+此规范描述当前实现，不是未来路线图。设置协议新接入使用 V2 的统一状态位图，既有 V1 配置及固件仍兼容；省略 protocol 继续默认网络 V1。V2 需要支持它的新客户端构建，不由 schemaVersion=7 或本包修订号推断。兼容快照版本与核对日期见 compatibility.json。
 
 应用内置界面支持简体中文和英文，可跟随系统或手动选择。导入配置中的 `title`、`label`、说明、单位及用户填写内容保持原文，不随应用语言自动翻译。请按硬件用户的目标语言填写这些文案；当前没有 `localizedTitles` 等多语言 JSON 字段。UUID、topic、字段 ID、枚举值和二进制/JSON 报文格式不参与翻译，不因应用语言变化而改变。为其他语言交付配置时只调整显示文案，不修改协议标识或编码。
 
@@ -30,20 +41,22 @@ MQTT 另交付统一 WS/WSS 的 Broker 部署及本机连接配置说明；地�
 
 ### 能力边界与扩展提示
 
+硬件接入任务只实现固件与配套配置，不修改 ThingsTalk 客户端或本契约。硬件差异放在配置及示例中；缺少客户端能力时报告缺口，不自行添加协议适配器或改变校验。
+
 硬件和配套配置必须从当前已实现的面板能力出发：先将每项需求映射到下表的 widget，或设置表单规范中已支持的 SetupProtocol、section/field ID 及其固定语义，再设计固件收发。允许修改实例标题、UUID、topic、受支持的报文格式，或组合现有组件生成新设备面板；这不等于新增客户端面板类型。不得仅因 JSON 可表达就宣称客户端支持。
 
 需要新的 widget、设置协议、字段语义、codec 或交互流程时，AI 必须在面向硬件开发者的最终输出正文中给出以下提示，不能只写在文件注释、内部推理或测试日志中：
 
 > **需要客户端扩展，当前不可直接使用**：需求是……；当前面板不能支持的部分是……；可用现有能力实现的替代方案及限制是……（没有则明确说明）；需要 ThingsTalk 增加……并与固件约定……。
 
-可交付已支持部分的配置，但必须明确列出未包含的需求及影响；不得静默删减需求、自造 protocol/widget/字段混入 `.thingstalk.json`，或把 Wi-Fi/MQTT 等固定设置字段重新解释为其他用途。扩展草案只放协议设计说明，明确标注“提案，尚未支持”，不作为可导入配置交付。必须在客户端实现、导入/编解码测试及本契约同步完成后，才可将扩展列为已支持；并提醒硬件开发者需要对应的新客户端版本，旧部署不会因 Skill 更新自动获得支持。
+可交付已支持部分的配置，但必须明确列出未包含的需求及影响；不得静默删减需求、自造 protocol/widget/字段混入 `.thingstalk.json`，或把 Wi-Fi/MQTT 等固定设置字段重新解释为其他用途。扩展草案只放协议设计说明，明确标注“提案，尚未支持”，不作为可导入配置交付。只有客户端维护者另行发布实现、验证并更新契约后，硬件接入任务才可将扩展列为已支持；并提醒硬件开发者需要对应的新客户端版本，旧部署不会因 Skill 更新自动获得支持。
 
 App 导入的是 `设备名.thingstalk.json` 面板配置，不是协议测试向量文件。含 `configuration` 文件名引用和 `valid`/`invalid` 用例的 JSON（例如 `wire-vectors.json`）供开发与测试使用；应选择 `configuration` 指向的配置文件导入。客户端不会自动加载该引用，也不会忽略未知字段来尝试导入测试文件。
 
 | 概念 | 配置位置 | 用途与边界 |
 | --- | --- | --- |
 | 普通控制面板 | capabilities / widgets / payloadFormats + 通道绑定 | 日常状态展示和操作；BLE read/write/notify 或 MQTT publish/subscribe |
-| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；BLE_CHUNKED_SETTINGS_V1 网络设置或 BLE_AI_SETTINGS_V1 AI 设置 |
+| 设置面板 SetupPanel | 顶层 setupPanels 数组（v7） | 文本/密码表单、字段校验、按组提交；BLE_CHUNKED_SETTINGS_V2 网络设置或 BLE_AI_SETTINGS_V2 AI 设置 |
 | App 本机 MQTT 连接配置 | App 连接配置库，不放进设备 JSON | ThingsTalk 自己连接 Broker，统一 WS/WSS；与外设保存的 MQTT 参数独立 |
 
 PanelDefinition 是包含普通组件和可选设置表单的整个设备配置，两者不需要拆成两个文件。SetupPanel 不是新的 widget.type，也不通过 capabilityId 绑定；它按自己的 section/field ID 和命令/状态特征执行。配置只包含定义；SSID、账号密码等运行时输入不导出。
@@ -185,13 +198,15 @@ GATT发现不携带本配置格式的自动安装约定。当前发布方式是�
 
 修订 4 补充：Android 也可按本机保存的设备地址直接尝试连接，无需本次扫描记录。地址变化或设备不可达时仍可能需要扫描；直接连接不要求扫描权限或旧版定位开关，蓝牙连接权限与蓝牙开启状态仍必须满足。固件报文与面板格式保持不变。
 
-## 专用 BLE 网络配置
+## 配置驱动的 BLE 设置
 
-Muyu v1 外设在 BLE 连接后可通过专用“设备网络设置”表单输入 Wi-Fi 和硬件 MQTT 参数；它不扩展组件枚举、普通报文字符串能力或面板 schema。完整 UUID、分包、保存回执、物理窗口与加密要求见 [BLE 网络配置](ble-network-provisioning.md)。Web 不支持。需要兼容新固件和新客户端；旧版木鱼固件不会因导入面板而获得配置特征。
+客户端仅通过导入的 v7 setupPanels 创建设置表单：设备名称、提示文案、服务/特征 UUID、字段长度和可选默认值来自 JSON，执行由 BleSetupPanelClient 和已实现的协议适配规则负责。不按厂商、型号、广播名或固定 UUID 插入业务页面。木鱼和 AI 鲸鱼配置仅为硬件接入示例，不是客户端内置设备类型。
+
+日志脱敏路径取自 SetupPanel 的命令及读取特征，并在当前诊断会话中保留已标记路径；不再按某款设备的 UUID 猜测敏感数据。必须先导入完整设置配置，再通过设置面板读写凭据；没有配置的原始 GATT 调试无法自动判断哪些特征包含秘密。通用设置的分包、保存回执、物理窗口与加密要求见 [BLE 设置规范](#v7-可配置设备设置面板)。Web 不执行 BLE 设置。
 
 ## v7 设置表单扩展
 
-需要设备 Wi-Fi / MQTT 参数表单时使用 schemaVersion 7，定义和限制见 [设置面板规范](ble-network-provisioning.md)。它在 v6 分通道结构上增加 setupPanels；普通不含表单的配置继续按上文 v3/v4/v6 交付。真实输入、密码和本机连接配置不进入面板文件。
+需要设备 Wi-Fi / MQTT 参数表单时使用 schemaVersion 7，定义和限制见 [设置面板规范](#v7-可配置设备设置面板)。它在 v6 分通道结构上增加 setupPanels；普通不含表单的配置继续按上文 v3/v4/v6 交付。真实输入、密码和本机连接配置不进入面板文件。
 
 Android 文件导入不依赖文件管理器提供正确的 MIME 类型，选中文件后仍校验 UTF-8、大小及完整配置结构。文件选择返回早于本机草稿恢复时，编辑器会等待加载；恢复冲突或读取错误需先处理，不能声称已导入。导入成功仅载入草稿，仍需保存应用。
 
@@ -314,7 +329,7 @@ Wi-Fi 和设备端 MQTT 参数由 `setupPanels` 声明，App 不再根据木鱼 
 
 v7 保留 v6 的 `channels.ble.bindings` / `channels.mqtt.bindings`、共享 capabilities/widgets/payloadFormats，增加可选顶层 `setupPanels`。支持 BLE、MQTT、DUAL；只有 BLE/DUAL 可包含设置表单。DUAL 必须指定 defaultChannel，单通道不得指定；无绑定的一侧填写 `bindings: []`。不得出现旧顶层 bindings。导入仍走开发者设置里的原入口，保存后在设备展示页 BLE 通道显示折叠表单。编辑器可查看表单摘要，字段定义目前通过 JSON 编辑/导入，不提供表单可视化搭建器。
 
-每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。协议可省略，默认值为 `BLE_CHUNKED_SETTINGS_V1`；独立 AI 设置使用 `BLE_AI_SETTINGS_V1`。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
+每个 SetupPanel 必须给出 id、title、instructions、protocol、serviceUuid、commandUuid、statusUuid、sections。新硬件必须显式声明 `BLE_CHUNKED_SETTINGS_V2`（网络）或 `BLE_AI_SETTINGS_V2`（AI）。为兼容旧配置，省略 protocol 仍按 `BLE_CHUNKED_SETTINGS_V1` 处理，绝不自动升级或探测切换。最多 4 个表单，ID 唯一，格式 `[A-Za-z][A-Za-z0-9_.-]{0,63}`；title 1–80 字符，instructions 最多 500 字符。UUID 使用完整格式，命令与状态不能相同。
 
 sections 包含 1–2 个分组，每组 id/title/fields。协议固定分组 1（字段 1/2）、分组 2（字段 3/4/5/6），组内 ID 唯一；字段标签和顺序由配置决定。每字段包括 id、label（1–80 字符）、maxBytes（1–512），可选 minBytes（默认 0）、secret（默认 false）、readUuid、rule（默认 TEXT）。minBytes 不得大于 maxBytes。字节长度按 UTF-8 计算，所有值拒绝 NUL。
 
@@ -324,11 +339,11 @@ sections 包含 1–2 个分组，每组 id/title/fields。协议固定分组 1�
 
 App 展开后由用户点击“准备设备设置”，读取状态和非密码配置，成功后开放编辑；不自动持续轮询。准备时不发送 BEGIN 或任何配置写入，最多等待 60 秒。密码留空保留旧值，明确勾选清除才发送空值（字段规则仍须允许空值）。输入只保留在当前表单内存，结束操作后清除密码，不写入配置、草稿、导出文件或持久存储。配置的命令与读取特征在 BLE 日志中隐藏内容，包括调试页访问。关闭表单/切换通道取消未完成任务，已发出的 COMMIT 不能撤回。
 
-参考自包含示例 `assets/setup-panel.thingstalk.json`，其中 UUID、字段长度与长按 UP 提示是木鱼固件的示例，不是 App 的固定逻辑。必须按目标硬件定义填写；该线协议固定编号/事务语义，其他线协议需要新增适配器，不可随意声明未实现的 protocol，也不执行任意脚本。普通 VALUE/SWITCH/SLIDER/BUTTON/NUMBER_INPUT 组件及数值/布尔 codec 不因此获得通用字符串报文能力。
+参考自包含示例 `assets/setup-panel.thingstalk.json`，其中 UUID、字段长度与长按 UP 提示是木鱼固件的示例，不是 App 的固定逻辑。必须按目标硬件定义填写；该线协议固定编号/事务语义，其他线协议需要新增适配器，不可随意声明未实现的 protocol，也不执行任意脚本。普通组件不会因此获得设置事务分包能力；普通 TEXT_INPUT/UTF8 仍使用自己的单条消息规则。
 
 ## 首次配置与读取结果
 
-编辑前仍需成功读取设备状态，并确认设置窗口开启。当前协议用 flags bit3/bit4 分别表示 Wi-Fi/MQTT 已保存：某组为 0 时代表正常的“未配置”，客户端仍读取该组已声明的 readUuid，以便由固件的加密读取权限触发系统安全协商；读取成功后将该组非密码字段置空并允许填写。例如初次配置且窗口已开启，flags 可为 0x01；状态仍需返回完整合法的 14 字节，不可返回空状态或 GATT 错误。
+编辑前仍需成功读取设备状态，并确认设置窗口开启。V2 用 savedSections 的 bit(sectionId - 1) 表示该分组已保存：某组为 0 时代表正常的“未配置”，客户端仍读取该组已声明的 readUuid，以便由固件的加密读取权限触发系统安全协商；读取成功后将该组非密码字段置空并允许填写。例如初次配置且窗口已开启，flags 可为 0x01；状态仍需返回完整合法的 16 字节，不可返回空状态或 GATT 错误。
 
 某组已保存时，客户端读取该组已声明 readUuid 的非密码字段；零长度字段值可以正常读入，输入最小长度在提交时校验。读取错误、非法状态帧、断线不能当成“未配置”。两组可分别处于已配置/未配置状态；现有 UI 对整个表单完成读取后才开放编辑，任一需读取字段失败会提供重试提示。窗口关闭时提示开启设置窗口，不开放编辑。
 
@@ -336,7 +351,7 @@ App 展开后由用户点击“准备设备设置”，读取状态和非密码�
 
 ## 写入事务
 
-所有报文最多 20 字节，头部为 `opcode UINT8 | requestId UINT16 LE | field UINT8 | offset UINT16 LE`，之后是 0–14 字节原始 UTF-8 数据。客户端按当前写入上限分包，不依赖较大 MTU。此分包仅适用于BLE_CHUNKED_SETTINGS_V1 适配器，不扩展普通面板的分包能力。
+所有报文最多 20 字节，头部为 `opcode UINT8 | requestId UINT16 LE | field UINT8 | offset UINT16 LE`，之后是 0–14 字节原始 UTF-8 数据。客户端按当前写入上限分包，不依赖较大 MTU。此分包仅适用于已声明的设置协议，不扩展普通面板的分包能力。
 
 - `B1` BEGIN：field=1 配置 Wi-Fi，field=2 配置 MQTT；offset=0，无数据。设备复制已保存配置为事务候选值。
 - `B2` APPEND：field 1=SSID、2=Wi-Fi 密码、3=URI、4=用户名、5=MQTT 密码、6=设备名。offset 必须是该字段已收到的字节数；零长度首包表示清空字段。Wi-Fi 事务只允许字段 1/2，MQTT 只允许 3/4/5/6。
@@ -345,18 +360,45 @@ App 展开后由用户点击“准备设备设置”，读取状态和非密码�
 
 事务绑定当前 BLE 连接与配置版本，60 秒无配置报文、断开连接、关闭设置窗口或网页更新配置都会令事务失效。新 BEGIN 替换旧候选值。中途退出不会保存部分字段；已发出的 COMMIT 无法撤销。客户端不重试或补发，超时需读回核实后再保存。
 
-状态 14 字节：`D1 | version=01 | flags | requestId UINT16 LE | opcode | result | field | nextOffset UINT16 LE | revision UINT32 LE`。
-flags 的 bit0=设置窗口开启，bit1=Wi-Fi 已连，bit2=MQTT 已连且订阅成功，bit3/4=Wi-Fi/MQTT 已保存，bit5/6=相应密码已存，bit7 保留。
-result：0 初始，1 接收成功，2 NVS 保存成功，3 参数错误，4 窗口关闭，5 会话/版本冲突，6 存储失败。
-每次 WRITE 响应仅表示入队；客户端读取配置的 statusUuid，匹配 requestId、opcode、field 和 nextOffset，COMMIT 还必须 result=2 才显示已保存。
+### V2 统一状态回执（16 字节）
 
-保存成功不等于连网成功；Wi-Fi/MQTT连接由后台工作任务处理并通过 flags 回报。普通组件不自动连接 Broker。设备端 Broker 配置和 App 本机“管理连接配置”是不同配置；本功能不向面板文件加入地址、密码或 profileId。
+网络与 AI 使用完全相同的状态结构和位语义，所有多字节整数为小端无符号数：
+
+| 偏移 | 长度 | 内容 |
+| --- | --- | --- |
+| 0 | 1 | D1 |
+| 1 | 1 | version=02 |
+| 2 | 1 | flags：bit0=设置窗口开启，bit1–7 必须为 0 |
+| 3 | 2 | requestId |
+| 5 | 1 | opcode：初始 0，或 B1/B2/B3/B4 |
+| 6 | 1 | result |
+| 7 | 1 | field（BEGIN 为 section ID；COMMIT/ABORT 为 0） |
+| 8 | 2 | nextOffset |
+| 10 | 4 | 配置 revision |
+| 14 | 1 | savedSections：bit(id-1)=该 section 已持久化 |
+| 15 | 1 | savedSecrets：bit(id-1)=该 secret field 已有非空凭据 |
+
+当前 section ID 为 1–2、field ID 为 1–6；其他位必须为 0。网络允许 savedSections=00/01/02/03，savedSecrets 仅 bit1（字段2 Wi-Fi 密码）、bit4（字段5 MQTT 密码）；AI 仅 section1（01）和字段2（02）。这两个位图的定义始终是 ID，不得把某一位重新解释成联网/服务商认证成功。位图报告整个设置服务的持久化状态，不受面板只展示部分字段影响；断电恢复后也应准确。省略秘密字段保留原值及位，清空字段清除对应位，成功保存设置组设置该组位。
+
+result：0 初始，1 接收成功，2 持久化保存成功，3 参数错误，4 窗口关闭，5 会话/版本冲突，6 存储失败。初始回执 request/opcode/result/field/nextOffset 为 0，revision 和状态位图来自设备实际状态。保存成功后 revision 增加（UINT32 回绕），失败不变。
+
+每次 WRITE 响应仅表示传输完成；客户端读 statusUuid，匹配 requestId、opcode、field、nextOffset。APPEND 的 nextOffset=请求 offset+本包负载字节数，其他操作为 0。COMMIT 必须 result=2 且目标分组已保存位为 1，才显示已保存。禁止把入队、发起联网或未经持久化的候选值报告成保存完成。
+
+Wi-Fi/MQTT连接和 AI 服务认证不属于该回执。需要展示时，另外暴露普通状态特征或 MQTT topic，并绑定普通 VALUE 组件；不能占用保留位。设备端 Broker 配置与 App 本机连接库独立，配置文件不包含运行时凭据。
+
+### V1 兼容边界
+
+已有 `BLE_CHUNKED_SETTINGS_V1` / `BLE_AI_SETTINGS_V1` 继续使用原 14 字节布局：`D1 01 flags requestId(2) opcode result field nextOffset(2) revision(4)`。网络 flags bit0=窗口、bit1=Wi-Fi连接、bit2=MQTT连接、bit3/4=分组1/2已保存、bit5/6=字段2/5秘密已存；AI bit0=窗口、bit3=分组1已保存、bit5=字段2秘密已存。客户端在独立兼容解析器中转换为统一表单状态，网络连接位不进入通用表单状态。
+
+V1 配置必须配 V1 固件，V2 配置必须配 V2 固件。版本/长度不匹配立即失败，保存前状态检查失败时不发送配置命令；不靠改配置枚举“升级”旧固件，也不自动降级或重放命令。新接入使用 V2；维护现有 V1 硬件时保留其协议。新 V2 配置需使用支持 V2 的 ThingsTalk 构建，Skill 修订号不能代替 App 版本。JSON 仍为 schemaVersion=7，这与线协议 version=02 是不同层级。
+
+独立向量见 `assets/setup-status-vectors.json`，它是测试数据，不可作为面板导入。
 
 ## 设备端与 App 本机 MQTT 的区别
 
 setupPanels 的 URI/用户名/密码配置的是外设，由 BLE 下发；真实输入值不进入面板文件。App 本机仍使用独立的连接配置库，统一 WS/WSS，用户自行选用；设备端 mqtt/mqtts 支持不代表 App 新增 TCP 支持。更改设备名时须同步对应精确 topic；当前不自动改写 topic 或自动创建本机连接配置。
 
-新示例可导入但不会自动给旧面板添加表单，需显式导入 v7。固件仍负责加密链路、配对、设置窗口、事务归属、存储和网络重连；提示文字本身不能实现这些保证。木鱼原固件使用物理设置窗口与加密 Just Works，不能视为 MITM 身份认证。
+硬件包 assets 中的设置示例明确使用 V2；客户端仓库 docs/examples 中既有木鱼示例保留 V1，供原固件使用。新示例不会自动升级旧设备；只有固件已实现 V2 时才改用 V2 配置。固件仍负责加密链路、配对、设置窗口、事务归属、存储和网络重连；提示文字本身不能实现这些保证。木鱼原固件使用物理设置窗口与加密 Just Works，不能视为 MITM 身份认证。
 
 自动测试验证配置导入/往返、独立 UUID、UTF-8 分包、密码保留/清空、提交失败不重试及日志隐藏。真实配对、分包、NVS 断电恢复及网络连通需真机联调，不把编译或模拟连接测试视为硬件验收。
 
@@ -378,17 +420,17 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
 
 保存前，secret 字段留空必须弹窗确认：设备报告已保存密码时说明“省略该字段并保留旧密码”；没有报告已保存时说明“本次不设置密码，需要认证的连接可能失败”。勾选清除时明确确认“发送空值清空密码”。取消返回填写，不发送配置。仅非空密码且未选择清除时可直接提交；绝不将密码内容放进弹窗或日志。保存回执更新密码是否已存标志，后续提示基于最新已知状态，最终校验仍由固件负责。
 
-## AI 设置适配器（BLE_AI_SETTINGS_V1）
+## AI 设置适配器（BLE_AI_SETTINGS_V2）
 
 此适配器独立于 Wi-Fi/MQTT 配网表单，仍使用 v7 setupPanels。必须使用固件专门提供的命令、状态及读取 UUID，不得指向网络配置特征。普通组件、自由文本聊天和 MQTT 参数配置行为不变。
 
 只允许一个 section（id=1），字段 id=1 为 HTTPS Chat Completions 完整地址，id=2 为 API Key（secret=true，无 readUuid），id=3 为模型名称。字段 1/3 使用 TEXT 规则，允许非秘密 defaultValue，固件仍须验证 HTTPS 地址和字段格式；Key 禁止默认值。最大字节数由固件规定，鲸鱼示例分别为 192/192/64。
 
-复用 B1/B2/B3/B4 六字节头、14 字节 ACK 状态和 20 字节分包：BEGIN field=1；APPEND field=1/2/3；COMMIT 要求显式字段 1/3，省略字段 2 保留 Key，空字段 2 清除 Key。状态帧 version=1，bit0=物理窗口，bit3=AI 已配置，bit5=Key 已保存，其他 flags 位为 0。设置表单内部沿用通用 saved/secret 状态处理，不表示 AI 配置成了 Wi-Fi。首次准备仍通过加密 readUuid 触发配对。Key 不读回、不出现在导出面板或日志中；响应中的 Key 已存标志不能证明服务商认证成功。
+复用 B1/B2/B3/B4 六字节头、16 字节 ACK 状态和 20 字节分包：BEGIN field=1；APPEND field=1/2/3；COMMIT 要求显式字段 1/3，省略字段 2 保留 Key，空字段 2 清除 Key。状态帧 version=2，flags bit0=窗口；savedSections bit0=分组1已保存，savedSecrets bit1=字段2 Key 已保存，其他位为 0。与网络设置遵循相同的 section/field ID 位图规则。首次准备仍通过加密 readUuid 触发配对。Key 不读回、不出现在导出面板或日志中；响应中的 Key 已存标志不能证明服务商认证成功。
 
 ### Fixed provider settings
 
-`BLE_AI_SETTINGS_V1` 的非秘密字段 1/3 可声明 `readOnly: true`，必须同时提供有效 `defaultValue`。客户端仍进行加密读取以完成访问准备，但显示为说明文字并固定提交默认值，用户只编辑 Key。其他字段和网络协议禁止 readOnly。旧配置省略该字段时行为不变；旧客户端可能拒绝新字段，需使用同步更新的客户端。固件必须独立校验固定服务参数，不能信任 UI 限制。
+`BLE_AI_SETTINGS_V2` 的非秘密字段 1/3 可声明 `readOnly: true`，必须同时提供有效 `defaultValue`。客户端仍进行加密读取以完成访问准备，但显示为说明文字并固定提交默认值，用户只编辑 Key。其他字段和网络协议禁止 readOnly。旧配置省略该字段时行为不变；旧客户端可能拒绝新字段，需使用同步更新的客户端。固件必须独立校验固定服务参数，不能信任 UI 限制。
 
 
 ## BLE 六组件完整可导入示例
@@ -1192,7 +1234,7 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "networkSetup",
       "title": "设备网络设置",
       "instructions": "长按设备 UP 键开启设置窗口，然后点击准备设备设置；如系统提示配对，请完成配对。读取成功后填写，保存后请检查设备网络状态。",
-      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
       "serviceUuid": "5c52a001-7d8a-4b19-9c63-414950415353",
       "commandUuid": "5c52a005-7d8a-4b19-9c63-414950415353",
       "statusUuid": "5c52a006-7d8a-4b19-9c63-414950415353",
@@ -2071,7 +2113,7 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "wifiSetup",
       "title": "Wi-Fi 设置",
       "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
-      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
       "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
       "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
       "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
@@ -2102,7 +2144,7 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "mqttSetup",
       "title": "MQTT 设置",
       "instructions": "长按设备 UP 键开启设置窗口，完成蓝牙配对后读取配置。保存后请检查设备网络状态。",
-      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
       "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
       "commandUuid": "5c53a005-7d8a-4b19-9c63-414950415353",
       "statusUuid": "5c53a006-7d8a-4b19-9c63-414950415353",
@@ -2148,7 +2190,7 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
       "id": "aiSetup",
       "title": "DeepSeek API Key",
       "instructions": "长按硬件 UP 开启设置窗口并完成配对。只需填写 DeepSeek 官方 API Key；接口、模型由固件固定。保存后不会自动发起付费请求。",
-      "protocol": "BLE_AI_SETTINGS_V1",
+      "protocol": "BLE_AI_SETTINGS_V2",
       "serviceUuid": "5c53a001-7d8a-4b19-9c63-414950415353",
       "commandUuid": "5c53a00c-7d8a-4b19-9c63-414950415353",
       "statusUuid": "5c53a00d-7d8a-4b19-9c63-414950415353",
@@ -2184,6 +2226,102 @@ BLE 写入失败时，客户端从 Kable 包装异常中仅提取允许的 CBATT
           ]
         }
       ]
+    }
+  ]
+}
+```
+
+## 设置状态协议测试向量（不可导入）
+
+```json
+{
+  "valid": [
+    {
+      "name": "v2 unconfigured",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "unlocked": true,
+      "sections": [],
+      "secrets": []
+    },
+    {
+      "name": "v2 network saved",
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 34 12 B3 02 00 00 00 04 03 02 01 03 12",
+      "unlocked": true,
+      "sections": [
+        1,
+        2
+      ],
+      "secrets": [
+        2,
+        5
+      ]
+    },
+    {
+      "name": "v2 ai saved",
+      "protocol": "BLE_AI_SETTINGS_V2",
+      "hex": "D1 02 01 34 12 B3 02 00 00 00 04 03 02 01 01 02",
+      "unlocked": true,
+      "sections": [
+        1
+      ],
+      "secrets": [
+        2
+      ]
+    },
+    {
+      "name": "v1 network",
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "hex": "D1 01 7F 34 12 B3 02 00 00 00 04 03 02 01",
+      "unlocked": true,
+      "sections": [
+        1,
+        2
+      ],
+      "secrets": [
+        2,
+        5
+      ]
+    },
+    {
+      "name": "v1 ai",
+      "protocol": "BLE_AI_SETTINGS_V1",
+      "hex": "D1 01 29 34 12 B3 02 00 00 00 04 03 02 01",
+      "unlocked": true,
+      "sections": [
+        1
+      ],
+      "secrets": [
+        2
+      ]
+    }
+  ],
+  "invalid": [
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 01 79 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "V1 cannot be used by V2"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V1",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "V2 cannot be used by V1"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 03 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "reason": "reserved flags"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 04 00",
+      "reason": "unknown section"
+    },
+    {
+      "protocol": "BLE_CHUNKED_SETTINGS_V2",
+      "hex": "D1 02 01 00 00 00 00 00 00 00 00 00 00 00 00 80",
+      "reason": "unknown field"
     }
   ]
 }

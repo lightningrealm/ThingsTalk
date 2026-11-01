@@ -3,7 +3,9 @@ package com.lr.thingstalk.domain.panel
 import com.lr.thingstalk.domain.ble.*
 import kotlinx.serialization.Serializable
 
-@Serializable enum class SetupProtocol { BLE_CHUNKED_SETTINGS_V1, BLE_AI_SETTINGS_V1 }
+@Serializable enum class SetupProtocol { BLE_CHUNKED_SETTINGS_V1, BLE_AI_SETTINGS_V1, BLE_CHUNKED_SETTINGS_V2, BLE_AI_SETTINGS_V2 }
+val SetupProtocol.isAi: Boolean get() = this == SetupProtocol.BLE_AI_SETTINGS_V1 || this == SetupProtocol.BLE_AI_SETTINGS_V2
+val SetupProtocol.isLegacy: Boolean get() = this == SetupProtocol.BLE_CHUNKED_SETTINGS_V1 || this == SetupProtocol.BLE_AI_SETTINGS_V1
 @Serializable enum class SetupFieldRule { TEXT, WIFI_PSK, MQTT_URI, IDENTIFIER }
 @Serializable data class SetupPanel(
     val id: String, val title: String, val instructions: String,
@@ -13,17 +15,6 @@ import kotlinx.serialization.Serializable
 ) {
     val command get() = BleCharacteristicId(serviceUuid, commandUuid)
     val status get() = BleCharacteristicId(serviceUuid, statusUuid)
-    fun isSectionSaved(status: NetworkSetupStatus, sectionId: Int): Boolean = when (protocol) {
-        SetupProtocol.BLE_AI_SETTINGS_V1 -> status.flags and 8 != 0
-        SetupProtocol.BLE_CHUNKED_SETTINGS_V1 -> if (sectionId == 1) status.wifiSaved else status.mqttSaved
-    }
-    fun savedSecretIds(status: NetworkSetupStatus): Set<Int> = when (protocol) {
-        SetupProtocol.BLE_AI_SETTINGS_V1 -> if (status.flags and 32 != 0) setOf(2) else emptySet()
-        SetupProtocol.BLE_CHUNKED_SETTINGS_V1 -> buildSet {
-            if (status.wifiPasswordSaved) add(2)
-            if (status.mqttPasswordSaved) add(5)
-        }
-    }
     fun readId(field: SetupField) = field.readUuid?.let { BleCharacteristicId(serviceUuid, it) }
     fun sensitiveCharacteristics() = listOf(command) + sections.flatMap { it.fields }.mapNotNull(::readId)
     fun supported(services: List<BleService>): Boolean {
@@ -55,7 +46,7 @@ fun validateSetupPanels(panels: List<SetupPanel>): List<String> = buildList {
         issue(panel.title.isBlank() || panel.title.length > 80 || panel.instructions.length > 500, "设置面板标题或说明长度无效")
         issue(!uuid.matches(panel.serviceUuid) || !uuid.matches(panel.commandUuid) || !uuid.matches(panel.statusUuid), "设置面板需要完整 UUID")
         issue(panel.commandUuid.equals(panel.statusUuid, true), "命令和状态特征不能相同")
-        val ai = panel.protocol == SetupProtocol.BLE_AI_SETTINGS_V1
+        val ai = panel.protocol.isAi
         issue(panel.sections.isEmpty() || panel.sections.size > (if (ai) 1 else 2) || panel.sections.map { it.id }.distinct().size != panel.sections.size, "设置分组应为 1–2 个且 ID 唯一")
         panel.sections.forEach { section ->
             issue(section.id !in (if (ai) 1..1 else 1..2) || section.title.isBlank() || section.title.length > 80, "设置分组无效")
@@ -92,9 +83,9 @@ fun SetupField.validateValue(value: String) {
 
 /** Inputs are ephemeral. Implementations must not persist or log their values. */
 interface SetupPanelSession {
-    suspend fun status(): NetworkSetupStatus
+    suspend fun status(): SetupState
     suspend fun readValues(): Map<Int, String>
-    suspend fun submit(sectionId: Int, values: Map<Int, String>): NetworkSetupStatus
+    suspend fun submit(sectionId: Int, values: Map<Int, String>): SetupState
 }
 
 /** Safe UI diagnostics: never include raw transport errors or configuration payloads. */
@@ -104,7 +95,7 @@ class SetupPanelFailure(
     message: String,
     val opcode: Int? = null,
     val request: Int? = null,
-    val reply: NetworkSetupStatus? = null,
+    val reply: SetupReceipt? = null,
 ) : IllegalStateException(message)
 
 /** Editable defaults apply only to unsaved groups; fixed provider metadata always follows its declared value. */

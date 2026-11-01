@@ -18,7 +18,7 @@ class AiProvisioningTest {
         assertEquals("deepseek-flash", fixed.initialInputs(mapOf(3 to "old-model"), emptySet())[3])
         val invalid = fixed.copy(sections = fixed.sections.map { it.copy(fields = it.fields.map { f -> if (f.id == 2) f.copy(readOnly = true) else f }) })
         assertTrue(validateSetupPanels(listOf(invalid)).isNotEmpty())
-        val raw = MuyuProvisioningTest.Connection(fixed.command, fixed.status)
+        val raw = BleSetupPanelClientTest.Connection(fixed.command, fixed.status)
         val client = BleSetupPanelClient(raw, fixed)
         assertFailsWith<IllegalArgumentException> { client.submit(1, mapOf(1 to "https://elsewhere.example/chat", 3 to "deepseek-flash")) }
         assertTrue(raw.writes.isEmpty())
@@ -41,7 +41,7 @@ class AiProvisioningTest {
             if (it.secret) it else it.copy(readUuid = if (it.id == 1)
                 "5c53a00e-7d8a-4b19-9c63-414950415353" else "5c53a00f-7d8a-4b19-9c63-414950415353")
         })))
-        val connection = MuyuProvisioningTest.Connection(f.command, f.status)
+        val connection = BleSetupPanelClientTest.Connection(f.command, f.status)
         connection.response[2] = 1
         val client = BleSetupPanelClient(connection, f)
         val empty = client.readValues()
@@ -51,20 +51,38 @@ class AiProvisioningTest {
         assertEquals("deepseek-flash", f.initialInputs(empty, setOf(1))[3])
         connection.response[2] = 0x29
         val status = client.status()
-        assertTrue(f.isSectionSaved(status, 1))
-        assertEquals(setOf(2), f.savedSecretIds(status))
+        assertTrue(1 in status.savedSectionIds)
+        assertEquals(setOf(2), status.savedSecretFieldIds)
         val saved = client.readValues()
         assertEquals("saved", f.initialInputs(saved, emptySet())[3])
         assertFalse(saved.containsKey(2))
         assertTrue(connection.writes.isEmpty())
         // Network secret flags must not be interpreted as another AI field.
         connection.response[2] = 0x41
-        assertTrue(f.savedSecretIds(client.status()).isEmpty())
+        assertTrue(client.status().savedSecretFieldIds.isEmpty())
+    }
+
+    @Test fun v2AiUsesTheSameSectionAndFieldBitPositionsAsNetwork() = runTest {
+        val f = form().copy(protocol = SetupProtocol.BLE_AI_SETTINGS_V2)
+        val raw = BleSetupPanelClientTest.Connection(f.command, f.status)
+        var secretMask = 2
+        val v2 = object : com.lr.thingstalk.domain.ble.BleConnection by raw {
+            override suspend fun read(characteristic: com.lr.thingstalk.domain.ble.BleCharacteristicId): ByteArray =
+                raw.read(characteristic).copyOf(16).also { it[1] = 2; it[2] = 1; it[14] = 1; it[15] = secretMask.toByte() }
+        }
+        val client = BleSetupPanelClient(v2, f)
+        val saved = client.submit(1, mapOf(1 to "https://example.com/chat", 3 to "model"))
+        assertEquals(setOf(1), saved.savedSectionIds)
+        assertEquals(setOf(2), saved.savedSecretFieldIds)
+        secretMask = 0
+        assertTrue(client.submit(1, mapOf(1 to "https://example.com/chat", 2 to "", 3 to "model")).savedSecretFieldIds.isEmpty())
+        secretMask = 0x10 // Network password field 5 is not defined by the AI standard.
+        assertEquals(SetupFailureKind.INVALID_STATUS, assertFailsWith<SetupPanelFailure> { client.status() }.kind)
     }
 
     @Test fun preservesOrExplicitlyClearsKeyAndChunksLongEndpoint() = runTest {
         val f = form()
-        val connection = MuyuProvisioningTest.Connection(f.command, f.status)
+        val connection = BleSetupPanelClientTest.Connection(f.command, f.status)
         connection.response[2] = 0x29
         val client = BleSetupPanelClient(connection, f)
         val values = mapOf(1 to "https://api.deepseek.com/chat/completions", 3 to "deepseek-flash")

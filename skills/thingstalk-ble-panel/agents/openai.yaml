@@ -1,4 +1,4 @@
 interface:
-  display_name: "ThingsTalk 硬件协议与面板"
-  short_description: "协同定义 BLE、MQTT 和双连接硬件协议、组件面板及连接配置说明"
-  default_prompt: "使用 $thingstalk-ble-panel 为我的硬件设计 BLE、MQTT 或双连接协议，并交付可导入面板、GATT/topic 映射、测试向量和连接配置说明。"
+  display_name: "ThingsTalk 硬件接入"
+  short_description: "按客户端已有面板标准实现 BLE、MQTT 或双连接固件和配套配置"
+  default_prompt: "使用 $thingstalk-ble-panel 按目标 ThingsTalk 版本已有能力实现我的硬件与面板 JSON；不修改客户端，缺少能力时报告缺口。"
