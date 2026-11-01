@@ -156,10 +156,12 @@ fun PanelEditorPage(viewModel: PanelViewModel, editor: PanelEditorViewModel, ins
             }
         }
         Section(tr(AppStrings.text_00_payload_formats_88db36, draft.payloadFormats.size), if (showFormats) tr(AppStrings.collapse_5d5815) else tr(AppStrings.expand_b0e248)) { showFormats = !showFormats }
-        if (showFormats) key(state.definition, importedRevision) {
-            PayloadFormatsEditor(draft.payloadFormats, draft.bindings) { formats ->
-                draft = draft.copy(schemaVersion = maxOf(3, draft.schemaVersion), payloadFormats = formats)
-                messages = emptyList(); notice = null
+        ExpandableContent(showFormats) {
+            key(state.definition, importedRevision) {
+                PayloadFormatsEditor(draft.payloadFormats, draft.bindings) { formats ->
+                    draft = draft.copy(schemaVersion = maxOf(3, draft.schemaVersion), payloadFormats = formats)
+                    messages = emptyList(); notice = null
+                }
             }
         }
         if (draft.setupPanels.isNotEmpty()) Panel {
@@ -275,25 +277,27 @@ fun PanelEditorPage(viewModel: PanelViewModel, editor: PanelEditorViewModel, ins
             TextButton(onClick = { confirmDiscardJson = true }) { Text(tr(AppStrings.discard_json_text_changes_cebb4b)) }
         }
         Section(tr(AppStrings.configuration_migration_2f0c73), if (showJson) tr(AppStrings.collapse_5d5815) else tr(AppStrings.expand_b0e248)) { showJson = !showJson }
-        if (showJson) Panel {
-            Text(tr(AppStrings.json_v_imports_v1_v2_v3_v4_v5_v6_v7_must_match_the_devi_ac1965, draft.schemaVersion), style = MaterialTheme.typography.titleMedium)
-            Text(tr(AppStrings.edit_or_copy_the_full_configuration_named_payload_forma_cddaf7), color = Muted, style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(onClick = {
-                messages = validatePanel(draft)
-                if (messages.isEmpty()) {
-                    try {
-                        editor.generatedJson(viewModel.exportDefinition(draft))
-                        notice = tr(AppStrings.json_generated_long_press_the_text_to_copy_1cfc8a)
-                    } catch (failure: Exception) {
-                        messages = listOf(tr(AppStrings.export_failed_3c3cf9, failure.message?.let(::diagnosticText)))
-                        notice = null
+        ExpandableContent(showJson) {
+            Panel {
+                Text(tr(AppStrings.json_v_imports_v1_v2_v3_v4_v5_v6_v7_must_match_the_devi_ac1965, draft.schemaVersion), style = MaterialTheme.typography.titleMedium)
+                Text(tr(AppStrings.edit_or_copy_the_full_configuration_named_payload_forma_cddaf7), color = Muted, style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = {
+                    messages = validatePanel(draft)
+                    if (messages.isEmpty()) {
+                        try {
+                            editor.generatedJson(viewModel.exportDefinition(draft))
+                            notice = tr(AppStrings.json_generated_long_press_the_text_to_copy_1cfc8a)
+                        } catch (failure: Exception) {
+                            messages = listOf(tr(AppStrings.export_failed_3c3cf9, failure.message?.let(::diagnosticText)))
+                            notice = null
+                        }
                     }
-                }
-            }, enabled = !editing.draft.jsonEdited, modifier = Modifier.fillMaxWidth()) { Text(tr(AppStrings.generate_draft_json_13f177)) }
-            OutlinedTextField(json, { json = it }, label = { Text(tr(AppStrings.paste_copy_json_54dbe1)) }, modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp, max = 340.dp), minLines = 6)
-            Primary(tr(AppStrings.validate_and_import_as_draft_ff6080), enabled = !state.busy && !fileActions.busy) { scope.launch { importDraft(json) } }
-            messages.forEach { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            notice?.let { Text(diagnosticText(it), color = Muted, style = MaterialTheme.typography.bodySmall) }
+                }, enabled = !editing.draft.jsonEdited, modifier = Modifier.fillMaxWidth()) { Text(tr(AppStrings.generate_draft_json_13f177)) }
+                OutlinedTextField(json, { json = it }, label = { Text(tr(AppStrings.paste_copy_json_54dbe1)) }, modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp, max = 340.dp), minLines = 6)
+                Primary(tr(AppStrings.validate_and_import_as_draft_ff6080), enabled = !state.busy && !fileActions.busy) { scope.launch { importDraft(json) } }
+                messages.forEach { Text(diagnosticText(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                notice?.let { Text(diagnosticText(it), color = Muted, style = MaterialTheme.typography.bodySmall) }
+            }
         }
         TextButton(onClick = { confirmClear = true }, enabled = draft.widgets.isNotEmpty() || draft.payloadFormats.isNotEmpty()) { Text(tr(AppStrings.clear_panel_draft_a2aac8)) }
     }

@@ -18,20 +18,21 @@ fun PayloadInspectorPanel(definition: PanelDefinition, inspector: PayloadInspect
     var expanded by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableIntStateOf(0) }
     Section(tr(AppStrings.payload_inspector_2ffae9), if (expanded) tr(AppStrings.collapse_5d5815) else tr(AppStrings.expand_b0e248)) { expanded = !expanded }
-    if (!expanded) return
-    Panel {
-        Tag(tr(AppStrings.offline_nothing_is_sent_14b074))
-        Text(tr(AppStrings.decode_or_preview_bytes_using_the_current_draft_no_conn_222ca5), color = Muted)
-        if (definition.payloadFormats.isEmpty()) {
-            Text(tr(AppStrings.add_a_payload_format_above_to_start_4ff583), color = Muted, style = MaterialTheme.typography.bodySmall)
-        } else {
-            val index = selectedIndex.coerceIn(0, definition.payloadFormats.lastIndex)
-            val format = definition.payloadFormats[index]
-            PanelPicker(tr(AppStrings.inspection_format_e32327), definition.payloadFormats.mapIndexed { i, item -> i.toString() to "${item.label.ifBlank { tr(AppStrings.unnamed_format_1fe1ee) }} · ${item.id} · ${item.encoding}" }, index.toString()) {
-                selectedIndex = it.toInt()
+    ExpandableContent(expanded) {
+        Panel {
+            Tag(tr(AppStrings.offline_nothing_is_sent_14b074))
+            Text(tr(AppStrings.decode_or_preview_bytes_using_the_current_draft_no_conn_222ca5), color = Muted)
+            if (definition.payloadFormats.isEmpty()) {
+                Text(tr(AppStrings.add_a_payload_format_above_to_start_4ff583), color = Muted, style = MaterialTheme.typography.bodySmall)
+            } else {
+                val index = selectedIndex.coerceIn(0, definition.payloadFormats.lastIndex)
+                val format = definition.payloadFormats[index]
+                PanelPicker(tr(AppStrings.inspection_format_e32327), definition.payloadFormats.mapIndexed { i, item -> i.toString() to "${item.label.ifBlank { tr(AppStrings.unnamed_format_1fe1ee) }} · ${item.id} · ${item.encoding}" }, index.toString()) {
+                    selectedIndex = it.toInt()
+                }
+                // Editing the schema invalidates both inputs and results, including offsets/defaults.
+                key(index, format) { PayloadInspectorContent(format, inspector) }
             }
-            // Editing the schema invalidates both inputs and results, including offsets/defaults.
-            key(index, format) { PayloadInspectorContent(format, inspector) }
         }
     }
 }

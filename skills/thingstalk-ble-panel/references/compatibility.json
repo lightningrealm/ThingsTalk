@@ -1,5 +1,5 @@
 {
-  "contractRevision": 34,
+  "contractRevision": 35,
   "reviewedOn": "2026-11-01",
   "panelSchemaVersions": {
     "BLE": 3,
@@ -91,7 +91,7 @@
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/MqttPanelBindingEditor.kt": "ecccc2401887194de01558e8566bd97338e5c5f4be134f988678d1ea85320501",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/panel/DefaultPayloadInspector.kt": "57c21af761aa43a9e35202f9a30a71685e528faece829fab70692dbf99c92c27",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/ble/TracingBleConnection.kt": "cfb3d1bb4cb93cea17f8beefd2dc12ff7e69c2198f342fb406143ad6220722cd",
-    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/SetupPanelView.kt": "a9396d77fac933249177a071f1ed3b0c3f8caa2a13de9d5e4c5af81d89c1a970",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/SetupPanelView.kt": "b0716cbf673940dfac2d75aea8ec89e03228f76f92030b657edd575f05b89df1",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/panel/SetupPanel.kt": "24407908e0189628f942959bf3d457f682f181d3a4d717729bc8f74057e523f2",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/ChunkedBleSettingsProtocol.kt": "3b6d6d776a2187b74d1d598e777f591a8c58882828f36be8a1cd3f714b1c9859",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/domain/ble/BleFailureDiagnostic.kt": "8a785cfac76222d572c9c53edc2b4a0f10a741cf62521a7fa8bcd5d3ba5f2de9",
@@ -119,7 +119,7 @@
     "shared/src/commonMain/kotlin/com/lr/thingstalk/data/mqtt/KtorMqttTransport.kt": "feb7112339e8e6d5cd59ef57af6715a7736442240033d6865de55ccfd72844b6",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/mqtt/MqttProfilePages.kt": "f346f2403865382f20ba66f4e88fa45ea3edce8f3df50aa677c4bf08aedcb0b0",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/DualPanelBindingEditor.kt": "3335df0fb501c04bcd6804438ef80167700a4a992a0212875e13f44d199673c7",
-    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelEditorPage.kt": "52e8a3d6a4662de71809bfb1c0caef65c6f51dcb165a1777d2cbf30781222b06",
+    "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelEditorPage.kt": "b0181c70c2f7626e8fbe7ced833f866498ff4615c0463261cdf5ebc9dc62a5d4",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/device/DeviceConnectionPanel.kt": "5ce18992206a2e9bda10e5c1805241ee0eddf4f3c93cb2997c2cdef43fb7b196",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/components/TransportTabs.kt": "196c57dac9a0fbdcbf9091d19683dcd1dd3bc9e0f816299ba98acecfacb36fe8",
     "shared/src/commonMain/kotlin/com/lr/thingstalk/presentation/panel/PanelViewModel.kt": "c6c40f09ba6f03d94acd079d32f83371a2b3ab2906bf688e77382561a2a53d90",

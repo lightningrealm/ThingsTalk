@@ -2,6 +2,17 @@ package com.lr.thingstalk.presentation.panel
 
 import com.lr.thingstalk.presentation.i18n.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,8 +27,21 @@ import kotlinx.coroutines.*
 @Composable
 internal fun SetupPanelView(definition: SetupPanel, session: SetupPanelSession?) {
     var expanded by remember(definition.id) { mutableStateOf(false) }
-    Panel {
-        TextButton(onClick = { expanded = !expanded }) { Text(definition.title + if (expanded) " −" else " +") }
+    val focus = LocalFocusManager.current
+    val rotation by animateFloatAsState(if (expanded) 180f else 0f, tween(220), label = "Setup disclosure")
+    val iconColor = MaterialTheme.colorScheme.primary
+    // Size animation keeps the shell smooth while removing the form immediately on collapse:
+    // its coroutine scope is cancelled and credential inputs are discarded without an exit delay.
+    Panel(Modifier.animateContentSize(tween(240, easing = FastOutSlowInEasing))) {
+        TextButton(onClick = { focus.clearFocus(); expanded = !expanded }, modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(definition.title, Modifier.weight(1f))
+                Canvas(Modifier.size(20.dp).rotate(rotation)) {
+                    drawLine(iconColor, Offset(size.width * .25f, size.height * .4f), Offset(size.width * .5f, size.height * .65f), 2.dp.toPx(), StrokeCap.Round)
+                    drawLine(iconColor, Offset(size.width * .5f, size.height * .65f), Offset(size.width * .75f, size.height * .4f), 2.dp.toPx(), StrokeCap.Round)
+                }
+            }
+        }
         if (!expanded) return@Panel
         Text(definition.instructions, color = Muted)
         if (session == null) {

@@ -39,8 +39,8 @@ fun Page(eyebrow: String, title: String, subtitle: String, content: @Composable 
 }
 
 @Composable
-fun Panel(content: @Composable ColumnScope.() -> Unit) {
-    Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface, border = BorderStroke(1.dp, Line)) {
+fun Panel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface, border = BorderStroke(1.dp, Line)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp), content = content)
     }
 }
